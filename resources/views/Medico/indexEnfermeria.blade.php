@@ -1,4 +1,6 @@
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <head>
     <meta charset="UTF-8">
@@ -244,7 +246,9 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
+
+{{-- Scripts necesarios --}}
 {{-- NO DataTables JS aquí, ya que usamos la paginación y búsqueda de Laravel --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {

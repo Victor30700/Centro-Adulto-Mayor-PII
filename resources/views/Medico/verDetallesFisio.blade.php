@@ -1,5 +1,6 @@
-@include('header') {{-- Incluye el header global de tu aplicación --}}
+@extends('layouts.main')
 
+@section('content')
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -257,8 +258,9 @@
     </div> {{-- Fin page-main --}}
 </div> {{-- Fin page --}}
 
-@include('footer') {{-- Incluye el footer global de tu aplicación --}}
+@endsection
 
+{{-- Scripts específicos para esta vista --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar Feather Icons al cargar la página

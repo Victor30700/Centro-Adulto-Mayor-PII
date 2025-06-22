@@ -1,6 +1,7 @@
 {{-- resources/views/Medico/indexRepFisio.blade.php --}}
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -166,7 +167,9 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
+
+{{-- Incluye el footer --}}
 
 {{-- MODAL DE CONFIRMACIÓN PERSONALIZADO (se mantiene aquí porque esta vista lo usa) --}}
 <div class="modal fade" id="customConfirmModalOverlay" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">

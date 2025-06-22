@@ -1,5 +1,6 @@
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -229,4 +230,4 @@
 
 </body>
 </html>
-@include('footer')
+@endsection

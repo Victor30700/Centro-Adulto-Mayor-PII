@@ -1,4 +1,6 @@
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <!DOCTYPE html>
 <html lang="es">
@@ -218,7 +220,9 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
+
+{{-- Incluye los scripts necesarios --}}
 
 {{-- MODAL DE CONFIRMACIÓN PERSONALIZADO --}}
 <div class="modal fade" id="customConfirmModalOverlay" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">

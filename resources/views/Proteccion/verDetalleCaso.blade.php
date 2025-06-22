@@ -1,5 +1,6 @@
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <head>
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/Proteccion/verDetalleCaso.css') }}">
@@ -212,7 +213,7 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
 
 <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">

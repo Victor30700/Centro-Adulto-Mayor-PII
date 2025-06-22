@@ -1,5 +1,6 @@
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -155,7 +156,9 @@
     </div> {{-- Fin page-main --}}
 </div> {{-- Fin page --}}
 
-@include('footer')
+@endsection
+
+{{-- Modal para confirmación de eliminación (si es necesario) --}}
 
 {{-- Modal para detalles (se mantiene si se usa para otros fines, pero para esta vista no es estrictamente necesario) --}}
 <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">

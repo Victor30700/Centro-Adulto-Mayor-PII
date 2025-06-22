@@ -1,5 +1,6 @@
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -222,8 +223,9 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
 
+@push('scripts')
 <!-- DataTables JS -->
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.js"></script>
 <script>
@@ -259,3 +261,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 </body>
 </html>
+@endpush

@@ -4,7 +4,9 @@
     $activeTab = session('active_tab', 'historia');
 @endphp
 
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <head>
     <meta charset="UTF-8">
@@ -329,7 +331,7 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

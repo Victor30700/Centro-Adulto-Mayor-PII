@@ -1,6 +1,7 @@
 {{-- resources/views/Medico/registrarFichaKine.blade.php --}}
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -180,7 +181,9 @@
     </div> {{-- Fin page-main --}}
 </div> {{-- Fin page --}}
 
-@include('footer')
+@endsection
+
+{{-- Scripts específicos para este formulario --}}
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

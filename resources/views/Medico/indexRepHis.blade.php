@@ -1,4 +1,6 @@
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <!DOCTYPE html>
 <html lang="es">
@@ -206,7 +208,11 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
+
+{{-- IMPORTANTE: NO DataTables JS aquí, ya que no se usa en esta vista --}}
+
+{{-- Scripts adicionales --}}
 
 {{-- MODAL DE CONFIRMACIÓN PERSONALIZADO (Añadir al final del body si no está ya en el footer o un layout principal) --}}
 <div class="modal fade" id="customConfirmModalOverlay" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">

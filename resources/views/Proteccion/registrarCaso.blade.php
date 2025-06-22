@@ -4,7 +4,9 @@
     $activeTab = $activeTab ?? (old('active_tab', session('active_tab', 'actividad'))); // Obtiene la pestaña activa desde el controlador, sesión o valor antiguo
 @endphp
 
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -561,4 +563,4 @@
 
 </body>
 </html>
-@include('footer')
+@endsection

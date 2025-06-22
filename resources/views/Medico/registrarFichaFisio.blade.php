@@ -1,4 +1,6 @@
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <!DOCTYPE html>
 <html lang="es">
@@ -235,7 +237,9 @@
     </div> {{-- Fin page-main --}}
 </div> {{-- Fin page --}}
 
-@include('footer')
+@endsection
+
+{{-- Scripts necesarios --}}
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

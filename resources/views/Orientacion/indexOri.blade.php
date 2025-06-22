@@ -1,4 +1,6 @@
-@include('header')
+@extends('layouts.main')
+
+@section('content')
 
 <head>
     <meta charset="UTF-8">
@@ -204,8 +206,9 @@
         </div>
     </div>
 </div>
+@endsection
 
-@include('footer')
+@push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.js"></script>
 <script>
@@ -256,3 +259,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 </body>
 </html>
+@endpush

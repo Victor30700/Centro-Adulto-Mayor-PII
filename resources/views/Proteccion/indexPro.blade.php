@@ -1,5 +1,6 @@
-@include('header')
+@extends('layouts.main')
 
+@section('content')
 <head>
     <!-- Añadimos jQuery (requerido por DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -154,7 +155,7 @@
     </div>
 </div>
 
-@include('footer')
+@endsection
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.js"></script>
 <script>
