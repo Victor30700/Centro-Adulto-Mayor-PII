@@ -193,13 +193,13 @@
                                         <li><a href="{{ route('gestionar-adultomayor.create') }}" class="slide-item">Registrar Paciente</a></li>
                                     </ul>
                                 </li>
-                                
+                                 
                                 <li class="sub-category"><h3>Módulo Protección</h3></li>
                                 <li class="slide">
-                                    <a class="side-menu__item" href="{{ route('legal.proteccion.create') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
+                                    <a class="side-menu__item" href="{{ route('admin.caso.index') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
                                 </li>
                                 <li class="slide">
-                                    <a class="side-menu__item" href="{{ route('legal.proteccion.reportes') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
+                                    <a class="side-menu__item" href="{{ route('admin.reportes_proteccion.index') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
                                 </li>
                                 
                                 <li class="sub-category"><h3>Módulo Médico</h3></li>
@@ -253,10 +253,10 @@
                                 
                                 <li class="sub-category"><h3>Módulo Protección</h3></li>
                                 <li class="slide">
-                                    <a class="side-menu__item" href="{{ route('legal.proteccion.create') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
+                                    <a class="side-menu__item" href="{{ route('admin.caso.index') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
                                 </li>
                                 <li class="slide">
-                                    <a class="side-menu__item" href="{{ route('legal.proteccion.reportes') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
+                                    <a class="side-menu__item" href="{{ route('admin.reportes_proteccion.index') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
                                 </li>
                             @endif
 

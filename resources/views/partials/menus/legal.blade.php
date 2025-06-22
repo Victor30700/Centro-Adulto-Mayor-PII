@@ -52,7 +52,7 @@ cuando el rol del usuario autenticado sea 'legal'.
     <ul class="slide-menu">
         <li class="side-menu-label1"><a href="javascript:void(0)">Casos de Protección</a></li>
         <li><a href="{{ route('legal.proteccion.index') }}" class="slide-item">Ver Casos</a></li>
-        <li><a href="{{ route('legal.proteccion.create') }}" class="slide-item">Registrar Caso</a></li>
-        <li><a href="{{ route('legal.proteccion.reportes') }}" class="slide-item">Reportes</a></li>
+        <li><a href="{{ route('admin.caso.index') }}" class="slide-item">Registrar Caso</a></li>
+        <li><a href="{{ route('admin.reportes_proteccion.index') }}" class="slide-item">Reportes</a></li>
     </ul>
 </li>

@@ -37,10 +37,10 @@ Descripción: Menú completo y corregido para el rol de Administrador.
 {{-- ===================== SECCIÓN MÓDULO PROTECCIÓN ===================== --}}
 <li class="sub-category"><h3>Módulo Protección</h3></li>
 <li class="slide">
-    <a class="side-menu__item" href="{{ route('legal.proteccion.create') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
+    <a class="side-menu__item" href="{{ route('admin.caso.index') }}"><i class="side-menu__icon fe fe-file-plus"></i><span class="side-menu__label">Registrar Caso</span></a>
 </li>
 <li class="slide">
-    <a class="side-menu__item" href="{{ route('legal.proteccion.reportes') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
+    <a class="side-menu__item" href="{{ route('admin.reportes_proteccion.index') }}"><i class="side-menu__icon fe fe-file-text"></i><span class="side-menu__label">Reportes Protección</span></a>
 </li>
 
 {{-- ===================== SECCIÓN MÓDULO MÉDICO (VISTA COMPLETA PARA ADMIN) ===================== --}}
@@ -48,22 +48,14 @@ Descripción: Menú completo y corregido para el rol de Administrador.
 <li class="slide">
     <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);"><i class="side-menu__icon fe fe-heart"></i><span class="side-menu__label">Enfermería</span><i class="angle fe fe-chevron-right"></i></a>
     <ul class="slide-menu">
-        <li><a href="{{ route('responsable.enfermeria.servicios') }}" class="slide-item">Servicios</a></li>
-        <li><a href="{{ route('responsable.enfermeria.historias') }}" class="slide-item">Historias Clínicas</a></li>
-        <li><a href="{{ route('responsable.enfermeria.reportes') }}" class="slide-item">Reportes Enfermería</a></li>
+        <li><a href="{{ route('admin.medico.historia_clinica.index') }}" class="slide-item">Historias Clínicas</a></li>
+        <li><a href="{{ route('admin.enfermeria.index') }}" class="slide-item">Reportes Enfermería</a></li>
     </ul>
 </li>
 <li class="slide">
-    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);"><i class="side-menu__icon fe fe-activity"></i><span class="side-menu__label">Fisioterapia</span><i class="angle fe fe-chevron-right"></i></a>
+    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);"><i class="side-menu__icon fe fe-activity"></i><span class="side-menu__label">Fisioterapia-Kinesiologia</span><i class="angle fe fe-chevron-right"></i></a>
     <ul class="slide-menu">
-        <li><a href="{{ route('responsable.fisioterapia.atencion') }}" class="slide-item">Atención</a></li>
-        <li><a href="{{ route('responsable.fisioterapia.reportes') }}" class="slide-item">Reportes</a></li>
-    </ul>
-</li>
-<li class="slide">
-    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);"><i class="side-menu__icon fe fe-wind"></i><span class="side-menu__label">Kinesiología</span><i class="angle fe fe-chevron-right"></i></a>
-    <ul class="slide-menu">
-        <li><a href="{{ route('responsable.kinesiologia.atencion') }}" class="slide-item">Atención</a></li>
-        <li><a href="{{ route('responsable.kinesiologia.reportes') }}" class="slide-item">Reportes</a></li>
+        <li><a href="{{ route('admin.fisiokine.indexFisio') }}" class="slide-item">Atención</a></li>
+        <li><a href="{{ route('admin.reportefisio.index') }}" class="slide-item">Reportes</a></li>
     </ul>
 </li>
