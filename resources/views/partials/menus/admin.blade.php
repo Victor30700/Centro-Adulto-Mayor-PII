@@ -48,7 +48,7 @@ Descripción: Menú completo y corregido para el rol de Administrador.
     <a class="side-menu__item" href="{{ route('admin.orientacion.index') }}"><i class="side-menu__icon fe fe-clipboard"></i><span class="side-menu__label">Registrar Ficha</span></a>
 </li>
 <li class="slide">
-    <a class="side-menu__item" href="{{ route('admin.reportes_proteccion.index') }}"><i class="side-menu__icon fe fe fe-shield"></i><span class="side-menu__label">Reportes Orientacion</span></a>
+    <a class="side-menu__item" href="{{ route('admin.reportes_orientacion.index') }}"><i class="side-menu__icon fe fe fe-shield"></i><span class="side-menu__label">Reportes Orientacion</span></a>
 </li>
 
 {{-- ===================== SECCIÓN MÓDULO MÉDICO (VISTA COMPLETA PARA ADMIN) ===================== --}}

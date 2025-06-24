@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Persona; // Asegúrate que el namespace sea correcto
 use App\Models\Rol;     // Asegúrate que el namespace sea correcto
 use App\Models\AdultoMayor;
+
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;

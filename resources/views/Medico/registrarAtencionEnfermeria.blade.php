@@ -29,7 +29,7 @@
         <a href="{{ route('responsable.enfermeria.enfermeria.index') }}" class="btn btn-secondary">← Volver al listado</a>
     </div>
 
-    <h6>
+    <h6 style="color: white;">
         @if($modoEdicion)
             Editar Atención de Enfermería para: <strong>{{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</strong>
         @else

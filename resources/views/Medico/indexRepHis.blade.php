@@ -20,11 +20,7 @@
 </head>
 
 <body>
-<div class="page">
-    <div class="page-main">
-        <div class="main-content app-content mt-0">
-            <div class="side-app">
-                <div class="main-container container-fluid">
+
 
                     <div class="page-header">
                         <h1 class="page-title">Módulo Médico / Reportes de Historia Clínica</h1>
@@ -202,11 +198,6 @@
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @endsection
 

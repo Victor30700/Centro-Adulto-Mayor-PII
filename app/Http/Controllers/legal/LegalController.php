@@ -11,6 +11,9 @@ use App\Models\Persona;
 use App\Models\AdultoMayor;
 use Carbon\Carbon;
 
+use App\Models\SeguimientoCaso; // Asegúrate de que este sea el modelo correcto para casos de protección
+use App\Models\Orientacion;     
+
 class LegalController extends Controller
 {
     /**
@@ -18,7 +21,21 @@ class LegalController extends Controller
      */
     public function dashboard()
     {
-        return view('pages.legal.dashboard');
+        // Conteo de pacientes
+        $totalPacientes = AdultoMayor::count();
+
+        // Conteo de casos de protección (contando casos únicos por adulto_mayor_id para evitar duplicados si hay múltiples seguimientos)
+        $casosProteccion = SeguimientoCaso::distinct('id_adulto')->count();
+
+        // Conteo de fichas de orientación
+        $fichasOrientacion = Orientacion::count();
+
+        // Pasar los datos a la vista
+        return view('pages.legal.dashboard', [
+            'totalPacientes' => $totalPacientes,
+            'casosProteccion' => $casosProteccion,
+            'fichasOrientacion' => $fichasOrientacion,
+        ]);
     }
 
     //======================================================================

@@ -21,166 +21,164 @@
 
 <body>
 
-<div class="container1">
-    <div class="navigation-buttons1">
-        <a href="{{ route('legal.orientacion.index') }}" class="btn">← Volver al listado</a>
-    </div>
+        <div class="navigation-buttons1">
+            <a href="{{ route('legal.orientacion.index') }}" class="btn">← Volver al listado</a>
+        </div>
 
-    <h6>
-        @if($modoEdicion)
-            Editar Ficha de Orientación para: <strong>{{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</strong>
-        @else
-            FICHA DE ORIENTACIÓN
-        @endif
-    </h6>
-
-    {{-- Manejo de notificaciones con SweetAlert2 --}}
-    @if(session('success'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: '¡Éxito!',
-                    text: '{{ session('success') }}',
-                    showConfirmButton: false,
-                    timer: 4500,
-                    timerProgressBar: true
-                });
-            });
-        </script>
-    @endif
-    
-    @if($errors->any())
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Errores en el formulario',
-                    html: '<ul style="text-align: left;">' + @json($errors->all()).map(error => `<li>${error}</li>`).join('') + '</ul>',
-                    confirmButtonText: 'Corregir'
-                });
-            });
-        </script>
-    @endif
-
-    <div class="form-section">
-        <form id="ficha-orientacion-form" action="{{ $modoEdicion ? route('legal.orientacion.update', ['cod_or' => optional($orientacion)->cod_or]) : route('legal.orientacion.store') }}" method="POST">
-            @csrf
+        <h6 style="color: white">
             @if($modoEdicion)
-                @method('PUT')
+                Editar Ficha de Orientación para: <strong>{{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</strong>
+            @else
+                FICHA DE ORIENTACIÓN
             @endif
+        </h6>
 
-            <input type="hidden" name="id_adulto" value="{{ $adulto->id_adulto }}">
+        {{-- Manejo de notificaciones con SweetAlert2 --}}
+        @if(session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: '{{ session('success') }}',
+                        showConfirmButton: false,
+                        timer: 4500,
+                        timerProgressBar: true
+                    });
+                });
+            </script>
+        @endif
+        
+        @if($errors->any())
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Errores en el formulario',
+                        html: '<ul style="text-align: left;">' + @json($errors->all()).map(error => <li>${error}</li>).join('') + '</ul>',
+                        confirmButtonText: 'Corregir'
+                    });
+                });
+            </script>
+        @endif
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label1 for="fecha_ingreso">FECHA DE INGRESO:</label1>
-                        <input type="date" id="fecha_ingreso" name="fecha_ingreso" class="form-control"
-                               value="{{ old('fecha_ingreso', optional($orientacion)->fecha_ingreso ? \Carbon\Carbon::parse($orientacion->fecha_ingreso)->format('Y-m-d') : date('Y-m-d')) }}">
-                        @error('fecha_ingreso')
-                            <span style="color: red;">{{ $message }}</span>
-                        @enderror
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label1 for="nro_caso">CASO Nº:</label1>
-                        <div class="read-only-field">{{ optional($adulto)->nro_caso ?? 'N/A' }}</div>
-                    </div>
-                </div>
-            </div>
+        <div class="form-section">
+            <form id="ficha-orientacion-form" action="{{ $modoEdicion ? route('legal.orientacion.update', ['cod_or' => optional($orientacion)->cod_or]) : route('legal.orientacion.store') }}" method="POST">
+                @csrf
+                @if($modoEdicion)
+                    @method('PUT')
+                @endif
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label1>Tipo de Orientación:</label1>
-                        <div class="radio-group">
-                            <div>
-                                <input type="radio" id="orientacion_psicologica" name="tipo_orientacion" value="psicologica"
-                                       {{ (old('tipo_orientacion') == 'psicologica' || (optional($orientacion)->tipo_orientacion == 'psicologica' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
-                                <label1 for="orientacion_psicologica">PSICOLÓGICA</label1>
-                            </div>
-                            <div>
-                                <input type="radio" id="orientacion_social" name="tipo_orientacion" value="social"
-                                       {{ (old('tipo_orientacion') == 'social' || (optional($orientacion)->tipo_orientacion == 'social' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
-                                <label1 for="orientacion_social">SOCIAL</label1>
-                            </div>
-                            <div>
-                                <input type="radio" id="orientacion_legal" name="tipo_orientacion" value="legal"
-                                       {{ (old('tipo_orientacion') == 'legal' || (optional($orientacion)->tipo_orientacion == 'legal' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
-                                <label1 for="orientacion_legal">LEGAL</label1>
-                            </div>
+                <input type="hidden" name="id_adulto" value="{{ $adulto->id_adulto }}">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label1 for="fecha_ingreso">FECHA DE INGRESO:</label1>
+                            <input type="date" id="fecha_ingreso" name="fecha_ingreso" class="form-control"
+                                value="{{ old('fecha_ingreso', optional($orientacion)->fecha_ingreso ? \Carbon\Carbon::parse($orientacion->fecha_ingreso)->format('Y-m-d') : date('Y-m-d')) }}">
+                            @error('fecha_ingreso')
+                                <span style="color: red;">{{ $message }}</span>
+                            @enderror
                         </div>
-                        @error('tipo_orientacion')
-                            <span style="color: red;">{{ $message }}</span>
-                        @enderror
                     </div>
-                </div>
-            </div>
-
-            <h5 class="mt-4">DATOS DE IDENTIFICACIÓN DEL ADULTO MAYOR Y/O SOLICITANTE:</h5>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="form-group">
-                        <label1 for="nombre_completo_am">NOMBRE COMPLETO:</label1>
-                        <div class="read-only-field">
-                            {{ optional($adulto->persona)->nombres }}
-                            {{ optional($adulto->persona)->primer_apellido }}
-                            {{ optional($adulto->persona)->segundo_apellido }}
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label1 for="nro_caso">CASO Nº:</label1>
+                            <div class="read-only-field">{{ optional($adulto)->nro_caso ?? 'N/A' }}</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label1 for="edad_am">EDAD:</label1>
-                        <div class="read-only-field">{{ optional($adulto->persona)->edad ?? 'N/A' }}</div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label1>Tipo de Orientación:</label1>
+                            <div class="radio-group">
+                                <div>
+                                    <input type="radio" id="orientacion_psicologica" name="tipo_orientacion" value="psicologica"
+                                        {{ (old('tipo_orientacion') == 'psicologica' || (optional($orientacion)->tipo_orientacion == 'psicologica' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
+                                    <label1 for="orientacion_psicologica">PSICOLÓGICA</label1>
+                                </div>
+                                <div>
+                                    <input type="radio" id="orientacion_social" name="tipo_orientacion" value="social"
+                                        {{ (old('tipo_orientacion') == 'social' || (optional($orientacion)->tipo_orientacion == 'social' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
+                                    <label1 for="orientacion_social">SOCIAL</label1>
+                                </div>
+                                <div>
+                                    <input type="radio" id="orientacion_legal" name="tipo_orientacion" value="legal"
+                                        {{ (old('tipo_orientacion') == 'legal' || (optional($orientacion)->tipo_orientacion == 'legal' && !old('tipo_orientacion'))) ? 'checked' : '' }}>
+                                    <label1 for="orientacion_legal">LEGAL</label1>
+                                </div>
+                            </div>
+                            @error('tipo_orientacion')
+                                <span style="color: red;">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="form-group">
-                        <label1 for="barrio_comunidad_am">BARRIO/COMUNIDAD:</label1>
-                        <div class="read-only-field">{{ optional($adulto->persona)->domicilio ?? 'N/A' }} / {{ optional($adulto->persona)->zona_comunidad ?? 'N/A' }}</div>
+
+                <h5 class="mt-4">DATOS DE IDENTIFICACIÓN DEL ADULTO MAYOR Y/O SOLICITANTE:</h5>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label1 for="nombre_completo_am">NOMBRE COMPLETO:</label1>
+                            <div class="read-only-field">
+                                {{ optional($adulto->persona)->nombres }}
+                                {{ optional($adulto->persona)->primer_apellido }}
+                                {{ optional($adulto->persona)->segundo_apellido }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label1 for="edad_am">EDAD:</label1>
+                            <div class="read-only-field">{{ optional($adulto->persona)->edad ?? 'N/A' }}</div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label1 for="telefono_am">TELÉFONO:</label1>
-                        <div class="read-only-field">{{ optional($adulto->persona)->telefono ?? 'N/A' }}</div>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label1 for="barrio_comunidad_am">BARRIO/COMUNIDAD:</label1>
+                            <div class="read-only-field">{{ optional($adulto->persona)->domicilio ?? 'N/A' }} / {{ optional($adulto->persona)->zona_comunidad ?? 'N/A' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label1 for="telefono_am">TELÉFONO:</label1>
+                            <div class="read-only-field">{{ optional($adulto->persona)->telefono ?? 'N/A' }}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group full-width">
-                <label1 for="motivo_orientacion">MOTIVOS DE ORIENTACIÓN:</label1>
-                <textarea id="motivo_orientacion" name="motivo_orientacion" rows="5" class="form-control">{{ old('motivo_orientacion', optional($orientacion)->motivo_orientacion) }}</textarea>
-                @error('motivo_orientacion')
-                    <span style="color: red;">{{ $message }}</span>
-                @enderror
-            </div>
+                <div class="form-group full-width">
+                    <label1 for="motivo_orientacion">MOTIVOS DE ORIENTACIÓN:</label1>
+                    <textarea id="motivo_orientacion" name="motivo_orientacion" rows="5" class="form-control">{{ old('motivo_orientacion', optional($orientacion)->motivo_orientacion) }}</textarea>
+                    @error('motivo_orientacion')
+                        <span style="color: red;">{{ $message }}</span>
+                    @enderror
+                </div>
 
-            <div class="form-group full-width">
-                <label1 for="resultado_obtenido">RESULTADOS OBTENIDOS EN RELACIÓN A LA ENTREVISTA DE ORIENTACIÓN:</label1>
-                <textarea id="resultado_obtenido" name="resultado_obtenido" rows="5" class="form-control">{{ old('resultado_obtenido', optional($orientacion)->resultado_obtenido) }}</textarea>
-                @error('resultado_obtenido')
-                    <span style="color: red;">{{ $message }}</span>
-                @enderror
-            </div>
+                <div class="form-group full-width">
+                    <label1 for="resultado_obtenido">RESULTADOS OBTENIDOS EN RELACIÓN A LA ENTREVISTA DE ORIENTACIÓN:</label1>
+                    <textarea id="resultado_obtenido" name="resultado_obtenido" rows="5" class="form-control">{{ old('resultado_obtenido', optional($orientacion)->resultado_obtenido) }}</textarea>
+                    @error('resultado_obtenido')
+                        <span style="color: red;">{{ $message }}</span>
+                    @enderror
+                </div>
 
-            <p class="text-muted full-width">EN CASO DE QUE SE IDENTIFIQUE ALGUN TIPO DE VIOLENCIA SE DEBE HACER LA DENUNCIA INMEDIATAMENTE POR LA VÍA CORRESPONDIENTE.</p>
+                <p class="text-muted full-width">EN CASO DE QUE SE IDENTIFIQUE ALGUN TIPO DE VIOLENCIA SE DEBE HACER LA DENUNCIA INMEDIATAMENTE POR LA VÍA CORRESPONDIENTE.</p>
 
-            <div class="navigation-buttons full-width">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fe fe-save"></i> @if($modoEdicion) Guardar Cambios @else Guardar Ficha @endif
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+                <div class="navigation-buttons full-width">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fe fe-save"></i> @if($modoEdicion) Guardar Cambios @else Guardar Ficha @endif
+                    </button>
+                </div>
+            </form>
+        </div>
 
 @push('scripts')
 <script>
@@ -240,7 +238,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Errores en el formulario',
-                        html: '<ul style="text-align: left; padding-left: 1.5rem;">' + errors.map(error => `<li>${error}</li>`).join('') + '</ul>',
+                        html: '<ul style="text-align: left; padding-left: 1.5rem;">' + errors.map(error => <li>${error}</li>).join('') + '</ul>',
                         confirmButtonText: 'Corregir'
                     });
                 }

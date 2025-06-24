@@ -1,7 +1,9 @@
 {{-- views/Admin/gestionarAdultoMayor/index.blade.php --}}
+
 @extends('layouts.main') {{-- Se usa el layout principal --}}
 
 @section('content')
+
     <div class="page-header">
         <h1 class="page-title">Gestionar Adultos Mayores</h1>
         <div>
@@ -17,19 +19,7 @@
         </div>
     </div>
 
-    {{-- Mensajes de éxito/error --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fe fe-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fe fe-alert-triangle me-2"></i>{{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    {{-- Las alertas de sesión ahora se manejarán con SweetAlert2 en el script --}}
 
     <div class="row">
         <div class="col-lg-12">
@@ -54,9 +44,9 @@
                                 <span class="input-group-text bg-success text-white">
                                     <i class="fe fe-search"></i>
                                 </span>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="busquedaInput" 
+                                <input type="text"
+                                       class="form-control"
+                                       id="busquedaInput"
                                        placeholder="Buscar por CI, nombres o apellidos..."
                                        autocomplete="off">
                                 <button class="btn btn-outline-success" type="button" id="limpiarBusqueda">
@@ -84,45 +74,12 @@
         </div>
     </div>
 
-{{-- Modal de confirmación para eliminar --}}
-<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title text-white" id="modalEliminarLabel">
-                    <i class="fe fe-alert-triangle me-2"></i>Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center py-3">
-                    <i class="fe fe-alert-triangle text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">¿Está seguro de eliminar este registro?</h5>
-                    <p class="text-muted">
-                        Se eliminará toda la información del adulto mayor: <br>
-                        <strong id="nombreEliminar"></strong> <br>
-                        <small>CI: <span id="ciEliminar"></span></small>
-                    </p>
-                    <div class="alert alert-warning mt-3">
-                        <small><strong>Advertencia:</strong> Esta acción no se puede deshacer.</small>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fe fe-x"></i> Cancelar
-                </button>
-                <form id="formEliminar" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fe fe-trash-2"></i> Sí, Eliminar
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- Formulario oculto que usará SweetAlert2 para realizar la eliminación --}}
+<form id="formEliminar" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 @endsection
 
 @push('styles')
@@ -132,18 +89,53 @@
         font-weight: 600;
         border-bottom: 2px solid #dee2e6;
     }
+    /* Estilos para que los botones de SweetAlert2 se vean consistentes */
+    .swal2-styled.swal2-confirm, .swal2-styled.swal2-cancel {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 </style>
 @endpush
 
 @push('scripts')
+{{-- CDN de SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    // === MANEJO DE ALERTAS DE SESIÓN CON SWEETALERT2 ===
+    @if(session('success'))
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: '¡Éxito!',
+            text: "{{ session('success') }}",
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            confirmButtonColor: '#d33'
+        });
+    @endif
+
+
+    // === LÓGICA DE BÚSQUEDA Y PAGINACIÓN (SIN CAMBIOS) ===
     let timeoutId;
     const busquedaInput = document.getElementById('busquedaInput');
     const limpiarBtn = document.getElementById('limpiarBusqueda');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const tablaContainer = document.getElementById('tablaContainer');
-    
+
     function realizarBusqueda(termino, page = 1) {
         loadingIndicator.style.display = 'block';
         tablaContainer.style.opacity = '0.5';
@@ -159,56 +151,91 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 tablaContainer.innerHTML = data.html;
-                inicializarEventosTabla(); 
+                inicializarEventosTabla();
             } else {
                 console.error('Error en búsqueda:', data.message);
-                // mostrarAlerta('Error en la búsqueda', 'danger');
+                // Alerta de error con SweetAlert2
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error en la Búsqueda',
+                    text: data.message || 'Ocurrió un error al procesar la búsqueda.',
+                    confirmButtonColor: '#d33'
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            // mostrarAlerta('Error de conexión durante la búsqueda', 'danger');
+            // Alerta de error de conexión con SweetAlert2
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Conexión',
+                text: 'No se pudo conectar con el servidor. Por favor, revise su conexión a internet e intente de nuevo.',
+                confirmButtonColor: '#d33'
+            });
         })
         .finally(() => {
             loadingIndicator.style.display = 'none';
             tablaContainer.style.opacity = '1';
         });
     }
-    
+
     busquedaInput.addEventListener('input', function() {
         clearTimeout(timeoutId);
         const termino = this.value.trim();
         timeoutId = setTimeout(() => { realizarBusqueda(termino, 1); }, 300);
     });
-    
+
     limpiarBtn.addEventListener('click', function() {
         busquedaInput.value = '';
         realizarBusqueda('');
     });
 
+
+    // === INICIALIZACIÓN DE EVENTOS (MODIFICADO PARA SWEETALERT2) ===
     function inicializarEventosTabla() {
+        // --- Confirmación de eliminación con SweetAlert2 ---
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(event) {
+                event.preventDefault(); // Previene la acción por defecto del botón
+                
                 const ci = this.dataset.ci;
                 const nombre = this.dataset.nombre;
-                
-                document.getElementById('ciEliminar').textContent = ci;
-                document.getElementById('nombreEliminar').textContent = nombre;
                 
                 // ===================== CORRECCIÓN 4 =====================
                 // Se construye la URL del formulario de eliminación con la ruta correcta
                 let deleteUrl = "{{ route('gestionar-adultomayor.eliminar', ['ci' => ':ci']) }}";
                 deleteUrl = deleteUrl.replace(':ci', ci);
-                document.getElementById('formEliminar').action = deleteUrl;
+                
+                // Diálogo de confirmación con SweetAlert2
+                Swal.fire({
+                    title: '¿Está seguro de eliminar este registro?',
+                    html: `Se eliminará toda la información del adulto mayor:<br><strong>${nombre}</strong><br><small>CI: ${ci}</small><br><br><b class='text-danger'>Advertencia: ¡Esta acción no se puede deshacer!</b>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6e7881',
+                    confirmButtonText: '<i class="fe fe-trash-2"></i> Sí, Eliminar',
+                    cancelButtonText: '<i class="fe fe-x"></i> Cancelar',
+                    reverseButtons: true // Pone el botón de confirmar a la derecha
+                }).then((result) => {
+                    // Si el usuario confirma, se envía el formulario oculto
+                    if (result.isConfirmed) {
+                        const form = document.getElementById('formEliminar');
+                        form.action = deleteUrl;
+                        form.submit();
+                    }
+                });
             });
         });
 
+        // --- Inicialización de tooltips de Bootstrap (sin cambios) ---
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
-    
+
+    // === MANEJO DE PAGINACIÓN (SIN CAMBIOS) ===
     tablaContainer.addEventListener('click', function(event) {
         if (event.target.matches('.pagination a')) {
             event.preventDefault();
@@ -217,7 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
             realizarBusqueda(busquedaInput.value.trim(), page);
         }
     });
-    
+
+    // Carga inicial de los eventos en la tabla
     inicializarEventosTabla();
 });
 </script>

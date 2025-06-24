@@ -1,21 +1,18 @@
 @extends('layouts.main')
 
-@push('styles')
+{{-- Define el título de la página --}}
+@section('title', 'Gestionar Roles')
 
+{{-- Estilos específicos de la vista --}}
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}"> {{-- Si este es un estilo global, puedes moverlo a layouts.main --}}
     <link rel="stylesheet" href="{{ asset('css/gestionarRoles.css') }}">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs5/dt-1.11.5/datatables.min.css"/>
-    {{-- Cargamos SweetAlert2 --}}
+    {{-- Cargamos SweetAlert2 CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
 @endpush
 
 @section('content')
-<div class="page">
-    <div class="page-main">
-        <div class="main-content app-content mt-0">
-            <div class="side-app">
-                <div class="main-container container-fluid">
-
                     <!-- Cabecera de la Página -->
                     <div class="page-header">
                         <h1 class="page-title">Gestionar Roles</h1>
@@ -27,7 +24,7 @@
                         </div>
                     </div>
 
-                    {{-- Las Alertas de Sesión se manejarán con SweetAlert2 --}}
+                    {{-- Las Alertas de Sesión se manejarán con SweetAlert2 (mediante JavaScript en @push('scripts')) --}}
 
                     <!-- Contenido Principal: Tabla de Roles -->
                     <div class="row">
@@ -38,6 +35,7 @@
                                     <h3 class="card-title text-white mb-0">Listado de Roles del Sistema</h3>
 
                                     @can('roles.create')
+                                        {{-- Ruta: admin.gestionar-roles.create --}}
                                         <a href="{{ route('admin.gestionar-roles.create') }}" class="btn btn-light btn-sm">
                                             <i class="fe fe-plus-circle me-1"></i>Agregar Rol
                                         </a>
@@ -83,13 +81,15 @@
                                                         <td class="text-center">
                                                             <div class="btn-group" role="group">
                                                                 @can('roles.edit')
+                                                                    {{-- Ruta: admin.gestionar-roles.edit --}}
                                                                     <a href="{{ route('admin.gestionar-roles.edit', $rol->id_rol) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Editar Rol">
                                                                         <i class="fe fe-edit"></i>
                                                                     </a>
                                                                 @endcan
                                                                 @can('roles.destroy')
                                                                     @if (strtolower($rol->nombre_rol) !== 'admin')
-                                                                        {{-- Se añade una clase para identificar el formulario con JS --}}
+                                                                        {{-- Formulario para eliminar rol con SweetAlert2 --}}
+                                                                        {{-- Ruta: admin.gestionar-roles.destroy --}}
                                                                         <form action="{{ route('admin.gestionar-roles.destroy', $rol->id_rol) }}" method="POST" class="d-inline form-delete-role">
                                                                             @csrf
                                                                             @method('DELETE')
@@ -121,21 +121,15 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-{{-- El modal de confirmación personalizado ya no es necesario --}}
 @endsection
 
-
-
+{{-- Scripts específicos de la vista --}}
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> {{-- Asegúrate que jQuery no se duplique si ya está en layouts.main --}}
 <script type="text/javascript" src="https://cdn.datatables.net/v/bs5/dt-1.11.5/datatables.min.js"></script>
-{{-- Cargamos SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+{{-- Cargamos SweetAlert2 JS --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -144,7 +138,10 @@
             feather.replace();
         }
         
-        if (typeof $().DataTable === 'function') {
+        // Inicializar DataTables
+        // Verifica si DataTable existe antes de inicializar para evitar errores si no se carga.
+        // Asumo que 'assets/translates/Spanish.json' es una ruta válida para el archivo de idioma.
+        if ($.fn.DataTable) { // Usamos $.fn.DataTable para comprobar la existencia de la función de jQuery DataTables
             $('#rolesTable').DataTable({
                 language: {
                     url: '{{ asset('assets/translates/Spanish.json') }}'
@@ -153,11 +150,13 @@
                 order: [[0, 'asc']],
                 dom: 'lfrtip',
                 columnDefs: [
-                    { targets: [3, 4, 5, 6], orderable: false, searchable: false }
+                    { targets: [3, 4, 5, 6], orderable: false, searchable: false } // Columnas de permisos, usuarios, estado y acciones
                 ]
             });
         }
 
+        // Inicializar Tooltips de Bootstrap
+        // Asegúrate que bootstrap.bundle.min.js o bootstrap.min.js esté cargado en layouts.main
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -184,7 +183,7 @@
                 icon: 'error',
                 title: '¡Error!',
                 text: '{{ session('error') }}',
-                showConfirmButton: false,
+                showConfirmButton: false, // Puedes cambiar a true si quieres que el usuario cierre el error manualmente
                 timer: 5000,
                 timerProgressBar: true
             });
@@ -193,19 +192,19 @@
         // --- Confirmación para eliminar Rol con SweetAlert2 ---
         document.querySelectorAll('.form-delete-role').forEach(form => {
             form.addEventListener('submit', function(event) {
-                event.preventDefault();
+                event.preventDefault(); // Evitar el envío normal del formulario
                 Swal.fire({
                     title: '¿Está seguro de eliminar este rol?',
-                    text: "¡Esta acción no se puede deshacer!",
-                    icon: 'error',
+                    text: "¡Esta acción no se puede deshacer! Se recomienda reasignar usuarios antes de eliminar un rol.",
+                    icon: 'warning', // Usar 'warning' para eliminaciones
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
+                    confirmButtonColor: '#d33', // Rojo para confirmar eliminación
+                    cancelButtonColor: '#6c757d', // Gris para cancelar
                     confirmButtonText: 'Sí, eliminar',
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        this.submit();
+                        this.submit(); // Si el usuario confirma, enviar el formulario
                     }
                 });
             });

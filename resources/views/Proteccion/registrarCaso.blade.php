@@ -33,7 +33,7 @@
 </head>
 <body>
 
-<div class="container">
+
                 <div class="navigation-buttons">
                     <a href="{{ route('legal.caso.index') }}">← Volver al listado</a>
                 </div>
@@ -192,7 +192,7 @@
             </form>
         </div>
     </div>
-</div>
+
 
 {{-- Script para la lógica de visualización de pestañas (sin AJAX) --}}
 <script>
