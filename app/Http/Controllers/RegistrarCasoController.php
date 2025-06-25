@@ -19,7 +19,20 @@ class RegistrarCasoController extends Controller
      */
     public function index()
     {
-        $adultos = AdultoMayor::with('persona')->get();
+        // Cargar el AdultoMayor con todas sus relaciones para que la lógica de la vista
+        // sobre si ya tiene un caso de protección sea eficiente.
+        $adultos = AdultoMayor::with([
+            'persona',
+            'actividadLaboral',
+            'encargados',
+            'denunciado',
+            'grupoFamiliar',
+            'croquis',
+            'seguimientos',
+            'anexoN3',
+            'anexoN5'
+        ])->paginate(10); // Añadido paginación de 10 elementos por página
+
         return view('Proteccion.indexPro', compact('adultos'));
     }
 
@@ -393,7 +406,7 @@ class RegistrarCasoController extends Controller
             'denunciado_natural.primer_apellido'   => 'required|string|max:100',
             'denunciado_natural.segundo_apellido'  => 'nullable|string|max:100',
             'denunciado_natural.edad'              => 'required|integer|min:1|max:120',
-            'denunciado_natural.ci'                => 'required|string|max:20',
+            'denunciado_natural.ci'                => 'nullable|string|max:20',
             'denunciado_natural.telefono'          => 'nullable|string|max:20',
             'denunciado_natural.direccion_domicilio' => 'nullable|string|max:255',
             'denunciado_natural.relacion_parentesco' => 'nullable|string|max:100',
@@ -696,40 +709,46 @@ class RegistrarCasoController extends Controller
     public function storeIntervencion(Request $request, $id_adulto)
     {
         $rules = [
-            'intervencion.resuelto_descripcion'    => 'nullable|string|max:1000',
-            'intervencion.no_resultado'            => 'nullable|string|max:255',
-            'intervencion.derivacion_institucion'  => 'nullable|string|max:255',
-            'intervencion.der_seguimiento_legal'   => 'nullable|string|max:255',
-            'intervencion.der_seguimiento_psi'     => 'nullable|string|max:255',
-            'intervencion.der_resuelto_externo'    => 'nullable|string|max:255',
-            'intervencion.der_noresuelto_externo'  => 'nullable|string|max:255',
-            'intervencion.abandono_victima'        => 'nullable|string|max:255',
+            'intervencion.resuelto_descripcion'      => 'nullable|string|max:1000',
+            'intervencion.no_resultado'              => 'nullable|string|max:255',
+            'intervencion.derivacion_institucion'    => 'nullable|string|max:255',
+            'intervencion.der_seguimiento_legal'     => 'nullable|string|max:255',
+            'intervencion.der_seguimiento_psi'       => 'nullable|string|max:255',
+            'intervencion.der_resuelto_externo'      => 'nullable|string|max:255',
+            'intervencion.der_noresuelto_externo'    => 'nullable|string|max:255',
+            'intervencion.abandono_victima'          => 'nullable|string|max:255',
             'intervencion.resuelto_conciliacion_jio' => 'nullable|string|max:255',
-            'intervencion.fecha_intervencion'                   => 'required|date',
+            'intervencion.fecha_intervencion'        => 'required|date',
         ];
 
         try {
             $request->validate($rules, [], [
-                'intervencion.resuelto_descripcion'    => 'Descripción de Resuelto',
-                'intervencion.no_resultado'            => 'No Resultado (Motivo)',
-                'intervencion.derivacion_institucion'  => 'Derivado a otra institución (Motivo)',
-                'intervencion.der_seguimiento_legal'   => 'Derivado y en seguimiento legal',
-                'intervencion.der_seguimiento_psi'     => 'Derivado y en seguimiento psicológico',
-                'intervencion.der_resuelto_externo'    => 'Derivado y resuelto en otra institución',
-                'intervencion.der_noresuelto_externo'  => 'Derivado a otra institución y no resuelto',
-                'intervencion.abandono_victima'        => 'Abandono por la víctima',
+                'intervencion.resuelto_descripcion'      => 'Descripción de Resuelto',
+                'intervencion.no_resultado'              => 'No Resultado (Motivo)',
+                'intervencion.derivacion_institucion'    => 'Derivado a otra institución (Motivo)',
+                'intervencion.der_seguimiento_legal'     => 'Derivado y en seguimiento legal',
+                'intervencion.der_seguimiento_psi'       => 'Derivado y en seguimiento psicológico',
+                'intervencion.der_resuelto_externo'      => 'Derivado y resuelto en otra institución',
+                'intervencion.der_noresuelto_externo'    => 'Derivado a otra institución y no resuelto',
+                'intervencion.abandono_victima'          => 'Abandono por la víctima',
                 'intervencion.resuelto_conciliacion_jio' => 'Resuelto mediante conciliación según Justicia Indígena Originaria',
-                'intervencion.fecha_intervencion'                   => 'Fecha de Intervención',
+                'intervencion.fecha_intervencion'        => 'Fecha de Intervención',
             ]);
 
             DB::beginTransaction();
 
-            $latestSeguimiento = SeguimientoCaso::where('id_adulto', $id_adulto)->latest()->first();
+            // *** MODIFICACIÓN CLAVE AQUÍ ***
+            // Ordena explícitamente por 'id_seg' en orden descendente para asegurar el ID más alto.
+            $latestSeguimiento = SeguimientoCaso::where('id_adulto', $id_adulto)
+                                                ->orderBy('id_seg', 'desc') // <-- Cambio
+                                                ->first();
+
             if (!$latestSeguimiento) {
                 throw new \Exception('No se puede registrar una Intervención sin un Seguimiento de Caso previo.');
             }
 
             $intervencionData = $request->input('intervencion');
+            // Busca o crea la intervención asociada a este id_seg específico
             $intervencion = Intervencion::firstOrNew(['id_seg' => $latestSeguimiento->id_seg]);
             $intervencion->fill($intervencionData);
             $intervencion->id_seg = $latestSeguimiento->id_seg; // Asegura que el FK está correctamente vinculado
@@ -748,7 +767,7 @@ class RegistrarCasoController extends Controller
             DB::rollBack();
             Log::error('Error inesperado al guardar Intervención: ' . $e->getMessage());
             return back()->withErrors(['general_error' => 'Ocurrió un error al guardar la Intervención. Detalles: '.$e->getMessage()])
-                         ->withInput()->with('active_tab', 'intervencion');
+                             ->withInput()->with('active_tab', 'intervencion');
         }
     }
 

@@ -35,7 +35,7 @@
 
 
                 <div class="navigation-buttons">
-                    <a href="{{ route('legal.caso.index') }}">← Volver al listado</a>
+                    <a href="{{ route('legal.caso.index') }}">Volver al listado</a>
                 </div>
     <h6>
         @if($modoEdicion)
@@ -331,11 +331,7 @@
                         { name: 'denunciado_natural[nombres]', label: 'Nombres' },
                         { name: 'denunciado_natural[primer_apellido]', label: 'Primer Apellido' },
                         { name: 'sexo', label: 'Sexo' },
-                        { name: 'denunciado_natural[ci]', label: 'CI' },
                         { name: 'denunciado_natural[edad]', label: 'Edad' },
-                        { name: 'denunciado_natural[telefono]', label: 'Teléfono' },
-                        { name: 'denunciado_natural[direccion_domicilio]', label: 'Dirección Domicilio' },
-                        { name: 'denunciado_natural[relacion_parentesco]', label: 'Relación/Parentesco' },
                         { name: 'descripcion_hechos', label: 'Descripción de los Hechos' }
                     ];
                     denunciadoFields.forEach(field => {
@@ -343,12 +339,7 @@
                         if (input && input.value.trim() === '') {
                             errors.push(`El campo "${field.label}" es obligatorio en Denunciado.`);
                         }
-                        if (field.name === 'denunciado_natural[ci]' && input?.value.trim() && !validarCI(input.value.trim())) {
-                            errors.push(`El campo "${field.label}" debe contener solo números y guiones (máx. 15 caracteres).`);
-                        }
-                        if (field.name === 'denunciado_natural[telefono]' && input?.value.trim() && !validarTelefono(input.value.trim())) {
-                            errors.push(`El campo "${field.label}" debe contener solo números y guiones (máx. 15 caracteres).`);
-                        }
+                        
                         if (field.name === 'denunciado_natural[edad]' && input?.value.trim()) {
                             const edad = parseInt(input.value.trim());
                             if (isNaN(edad) || edad < 1 || edad > 120) {

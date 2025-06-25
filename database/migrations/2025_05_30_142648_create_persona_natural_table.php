@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('segundo_apellido', 100)->nullable();
             $table->string('nombres', 255);
             $table->integer('edad');
-            $table->string('ci', 20)->unique(); // Añadido unique para CI
+            $table->string('ci', 20)->unique()->nullable(); // Añadido unique para CI
             $table->string('telefono', 20)->nullable();
             $table->string('direccion_domicilio', 255)->nullable();
             $table->string('relacion_parentesco', 100)->nullable();

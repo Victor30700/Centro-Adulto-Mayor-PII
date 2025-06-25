@@ -1,47 +1,63 @@
 {{-- Proteccion/partials/seguimientoCaso.blade.php --}}
 <div class="section-content">
+    {{-- Comprueba si existen seguimientos para el Adulto Mayor --}}
     @if($adulto->seguimientos->isNotEmpty())
         <ul class="item-list">
-            @foreach($adulto->seguimientos->sortByDesc('fecha') as $seguimiento)
-                <li>
-                    <div class="sub-section-title">Seguimiento Nro: {{ $seguimiento->nro }}</div>
-                    <div class="detail-row">
-                        <span class="detail-label">Fecha:</span> <span class="detail-value">{{ optional($seguimiento->fecha)->format('d/m/Y') ?? 'N/A' }}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Acción Realizada:</span> <span class="detail-value">{{ $seguimiento->accion_realizada ?? 'N/A' }}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Resultado Obtenido:</span> <span class="detail-value">{{ $seguimiento->resultado_obtenido ?? 'N/A' }}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Registrado por:</span> <span class="detail-value">{{ optional(optional($seguimiento->usuario)->persona)->nombres }} {{ optional(optional($seguimiento->usuario)->persona)->primer_apellido }} {{ optional(optional($seguimiento->usuario)->persona)->segundo_apellido }}</span>
+            {{-- MODIFICACIÓN CLAVE AQUÍ: Ordena por 'id_seg' de forma ascendente --}}
+            @foreach($adulto->seguimientos->sortBy('id_seg') as $seguimiento)
+                <li class="seguimiento-item">
+                    {{-- Título principal del seguimiento --}}
+                    <div class="sub-section-title border-bottom pb-2 mb-3">
+                        Seguimiento Nro: {{ $seguimiento->nro ?? 'N/A' }}
                     </div>
 
-                    {{-- Detalles de la intervención (si existe) - Ahora con un toggle --}}
+                    {{-- Detalles del Seguimiento --}}
+                    <div class="seguimiento-details mb-3">
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha:</span> 
+                            <span class="detail-value">{{ optional($seguimiento->fecha)->format('d/m/Y') ?? 'N/A' }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Acción Realizada:</span> 
+                            <span class="detail-value">{{ $seguimiento->accion_realizada ?? 'N/A' }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Resultado Obtenido:</span> 
+                            <span class="detail-value">{{ $seguimiento->resultado_obtenido ?? 'N/A' }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Registrado por:</span> 
+                            <span class="detail-value">
+                                {{ optional(optional($seguimiento->usuario)->persona)->nombres ?? 'N/A' }}
+                                {{ optional(optional($seguimiento->usuario)->persona)->primer_apellido ?? '' }}
+                                {{ optional(optional($seguimiento->usuario)->persona)->segundo_apellido ?? '' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Sección de Intervención (con toggle) --}}
                     @if(optional($seguimiento->intervencion)->exists)
                         <button type="button" class="btn btn-view-details mt-3 toggle-intervencion-btn" data-bs-toggle="collapse" data-bs-target="#collapseIntervencion-{{ $seguimiento->nro }}">
-                            <i data-feather="plus-circle" class="toggle-icon"></i> Ver Detalles de Intervención
+                            <i data-feather="plus-circle" class="toggle-icon me-2"></i>
+                            <span class="button-text">Ver Detalles de Intervención</span>
                         </button>
                         <div class="intervencion-details-collapsible collapse mt-3" id="collapseIntervencion-{{ $seguimiento->nro }}">
-                            <div class="sub-section-title">Detalle de Intervención</div>
+                            <div class="sub-section-title border-bottom pb-2 mb-3 mt-3">Detalle de Intervención</div>
+                            
                             <div class="detail-row">
                                 <span class="detail-label">Fecha Intervención:</span>
                                 <span class="detail-value">
                                     @php
                                         $fechaIntervencion = optional($seguimiento->intervencion)->fecha_intervencion;
-                                        $formattedDate = 'N/A'; // Valor por defecto si no hay fecha o es inválida
+                                        $formattedDate = 'N/A';
 
                                         if ($fechaIntervencion) {
                                             try {
-                                                // Intenta convertir a Carbon si no lo es ya
                                                 if (!($fechaIntervencion instanceof \Carbon\Carbon)) {
                                                     $fechaIntervencion = \Carbon\Carbon::parse($fechaIntervencion);
                                                 }
                                                 $formattedDate = $fechaIntervencion->format('d/m/Y');
                                             } catch (\Exception $e) {
-                                                // En caso de que la cadena de fecha sea inválida
-                                                // error_log("Error parsing fecha_intervencion: " . $e->getMessage()); // Solo para depuración
                                                 $formattedDate = 'Fecha inválida';
                                             }
                                         }
@@ -50,35 +66,44 @@
                                 </span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Resuelto (Descripción):</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->resuelto_descripcion ?? 'N/A' }}</span>
+                                <span class="detail-label">Resuelto (Descripción):</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->resuelto_descripcion ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">No Resultado (Motivo):</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->no_resultado ?? 'N/A' }}</span>
+                                <span class="detail-label">No Resultado (Motivo):</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->no_resultado ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Derivado a Institución:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->derivacion_institucion ?? 'N/A' }}</span>
+                                <span class="detail-label">Derivado a Institución:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->derivacion_institucion ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Seguimiento Legal:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->der_seguimiento_legal ?? 'N/A' }}</span>
+                                <span class="detail-label">Seguimiento Legal:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->der_seguimiento_legal ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Seguimiento Psicológico:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->der_seguimiento_psi ?? 'N/A' }}</span>
+                                <span class="detail-label">Seguimiento Psicológico:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->der_seguimiento_psi ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Resuelto Externo:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->der_resuelto_externo ?? 'N/A' }}</span>
+                                <span class="detail-label">Resuelto Externo:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->der_resuelto_externo ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">No Resuelto Externo:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->der_noresuelto_externo ?? 'N/A' }}</span>
+                                <span class="detail-label">No Resuelto Externo:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->der_noresuelto_externo ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Abandono Víctima:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->abandono_victima ?? 'N/A' }}</span>
+                                <span class="detail-label">Abandono Víctima:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->abandono_victima ?? 'N/A' }}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Conciliación JIO:</span> <span class="detail-value">{{ optional($seguimiento->intervencion)->resuelto_conciliacion_jio ?? 'N/A' }}</span>
+                                <span class="detail-label">Conciliación JIO:</span> 
+                                <span class="detail-value">{{ optional($seguimiento->intervencion)->resuelto_conciliacion_jio ?? 'N/A' }}</span>
                             </div>
                         </div>
                     @else
-                        <div class="no-data-message" style="margin-top: 15px;">No hay datos de intervención para este seguimiento.</div>
+                        <div class="no-data-message mt-3">No hay datos de intervención para este seguimiento.</div>
                     @endif
                 </li>
             @endforeach
@@ -91,32 +116,32 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.toggle-intervencion-btn').forEach(button => {
-            // Adjuntar listener directamente al botón de Bootstrap
+            const icon = button.querySelector('.toggle-icon');
+            const buttonTextSpan = button.querySelector('.button-text');
+            const targetId = button.getAttribute('data-bs-target');
+            const targetElement = document.querySelector(targetId);
+
+            const updateButtonState = () => {
+                if ($(targetElement).hasClass('show')) {
+                    icon.setAttribute('data-feather', 'minus-circle');
+                    buttonTextSpan.textContent = 'Ocultar Detalles de Intervención';
+                } else {
+                    icon.setAttribute('data-feather', 'plus-circle');
+                    buttonTextSpan.textContent = 'Ver Detalles de Intervención';
+                }
+                if (typeof feather !== 'undefined') {
+                    feather.replace({ target: icon });
+                }
+            };
+
             button.addEventListener('click', function() {
-                const icon = this.querySelector('.toggle-icon');
-                // Bootstrap 5 ya maneja el toggle, solo necesitamos el icono
-                // Comprobamos si el target está actualmente visible
-                const targetId = this.getAttribute('data-bs-target');
-                const targetElement = document.querySelector(targetId);
-
-                // Esperar un breve momento para que Bootstrap haga su trabajo de toggle
-                setTimeout(() => {
-                    if ($(targetElement).hasClass('show')) {
-                        icon.setAttribute('data-feather', 'minus-circle');
-                        this.innerHTML = '<i data-feather="minus-circle" class="toggle-icon"></i> Ocultar Detalles de Intervención';
-                    } else {
-                        icon.setAttribute('data-feather', 'plus-circle');
-                        this.innerHTML = '<i data-feather="plus-circle" class="toggle-icon"></i> Ver Detalles de Intervención';
-                    }
-                    if (typeof feather !== 'undefined') {
-                        feather.replace({ target: icon }); // Solo reemplazar el icono específico
-                    }
-                }, 100); // Pequeño retraso para que Bootstrap actualice la clase 'show'
+                setTimeout(updateButtonState, 150);
             });
+            
+            updateButtonState(); 
 
-            // Llamar a feather.replace() para los botones que ya están en el DOM al cargar el partial
             if (typeof feather !== 'undefined') {
-                feather.replace({ target: button.querySelector('.toggle-icon') });
+                feather.replace({ target: icon });
             }
         });
     });

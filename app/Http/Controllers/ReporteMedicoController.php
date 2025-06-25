@@ -215,7 +215,7 @@ class ReporteMedicoController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Atenciones Enfermería');
 
-        // --- Título del documento (ajustado para cubrir hasta la columna 'S') ---
+        // --- Título del documento ---
         Carbon::setLocale('es'); // Asegura que el nombre del mes sea en español
         $monthName = Carbon::now()->locale('es')->monthName;
         if ($fecha_fin) {
@@ -356,32 +356,36 @@ class ReporteMedicoController extends Controller
         $sheet->getColumnDimension('S')->setWidth(4);  // Firma (ajustado para vertical)
 
 
-        // Llenar datos
+        // Llenar datos (APLICANDO mb_strtoupper() A LOS CAMPOS DE TEXTO)
         $currentRow = 8; 
         foreach ($atenciones as $index => $atencion) {
             $adulto = $atencion->adulto;
             $persona = $adulto->persona;
 
             $sheet->setCellValue('A' . $currentRow, $index + 1);
-            $sheet->setCellValue('B' . $currentRow, $persona->nombres . ' ' . $persona->primer_apellido . ' ' . $persona->segundo_apellido);
+            $sheet->setCellValue('B' . $currentRow, mb_strtoupper(trim(
+                ($persona->nombres ?? '') . ' ' .
+                ($persona->primer_apellido ?? '') . ' ' .
+                ($persona->segundo_apellido ?? '')
+            )));
             $sheet->setCellValue('C' . $currentRow, ($persona->sexo == 'F' ? 'X' : ''));
             $sheet->setCellValue('D' . $currentRow, ($persona->sexo == 'M' ? 'X' : ''));
             $sheet->setCellValue('E' . $currentRow, ($persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : ''));
             
             // Datos de Atención de Enfermería (mapeados a las columnas según la imagen)
-            $sheet->setCellValue('F' . $currentRow, $atencion->presion_arterial);
-            $sheet->setCellValue('G' . $currentRow, $atencion->frecuencia_cardiaca);
-            $sheet->setCellValue('H' . $currentRow, $atencion->frecuencia_respiratoria);
-            $sheet->setCellValue('I' . $currentRow, $atencion->pulso);
-            $sheet->setCellValue('J' . $currentRow, $atencion->temperatura);
-            $sheet->setCellValue('K' . $currentRow, $atencion->control_oximetria);
-            $sheet->setCellValue('L' . $currentRow, $atencion->inyectables);
-            $sheet->setCellValue('M' . $currentRow, $atencion->peso_talla);
-            $sheet->setCellValue('N' . $currentRow, $atencion->orientacion_alimentacion);
-            $sheet->setCellValue('O' . $currentRow, $atencion->lavado_oidos);
-            $sheet->setCellValue('P' . $currentRow, $atencion->curacion);
-            $sheet->setCellValue('Q' . $currentRow, $atencion->adm_medicamentos);
-            $sheet->setCellValue('R' . $currentRow, $atencion->derivacion);
+            $sheet->setCellValue('F' . $currentRow, mb_strtoupper($atencion->presion_arterial ?? ''));
+            $sheet->setCellValue('G' . $currentRow, mb_strtoupper($atencion->frecuencia_cardiaca ?? ''));
+            $sheet->setCellValue('H' . $currentRow, mb_strtoupper($atencion->frecuencia_respiratoria ?? ''));
+            $sheet->setCellValue('I' . $currentRow, mb_strtoupper($atencion->pulso ?? ''));
+            $sheet->setCellValue('J' . $currentRow, mb_strtoupper($atencion->temperatura ?? ''));
+            $sheet->setCellValue('K' . $currentRow, mb_strtoupper($atencion->control_oximetria ?? ''));
+            $sheet->setCellValue('L' . $currentRow, mb_strtoupper($atencion->inyectables ?? ''));
+            $sheet->setCellValue('M' . $currentRow, mb_strtoupper($atencion->peso_talla ?? ''));
+            $sheet->setCellValue('N' . $currentRow, mb_strtoupper($atencion->orientacion_alimentacion ?? ''));
+            $sheet->setCellValue('O' . $currentRow, mb_strtoupper($atencion->lavado_oidos ?? ''));
+            $sheet->setCellValue('P' . $currentRow, mb_strtoupper($atencion->curacion ?? ''));
+            $sheet->setCellValue('Q' . $currentRow, mb_strtoupper($atencion->adm_medicamentos ?? ''));
+            $sheet->setCellValue('R' . $currentRow, mb_strtoupper($atencion->derivacion ?? ''));
             $sheet->setCellValue('S' . $currentRow, ''); // Columna de firma vacía
 
             $currentRow++;
@@ -520,7 +524,7 @@ class ReporteMedicoController extends Controller
             $personaUsuario = $usuario ? $usuario->persona : null;
             
             // Acceder a la colección de exámenes y tomar el primero, si existe
-            $examenComplementario = $historia->examenesComplementarios->first(); // CAMBIO CLAVE AQUÍ
+            $examenComplementario = $historia->examenesComplementarios->first();
             $medicamentosRecetados = $historia->medicamentosRecetados;
 
             if (!$adulto || !$persona) {
@@ -587,12 +591,12 @@ class ReporteMedicoController extends Controller
 
             // MUNICIPIO:
             $sheet->mergeCells('A8:B8'); $sheet->setCellValue('A8', 'MUNICIPIO:');
-            $sheet->mergeCells('C8:J8'); $sheet->setCellValue('C8', $historia->municipio_nombre ?? '');
+            $sheet->mergeCells('C8:J8'); $sheet->setCellValue('C8', mb_strtoupper($historia->municipio_nombre ?? ''));
             $sheet->getStyle('A8:J8')->applyFromArray($thinBorder);
 
             // ESTABLECIMIENTO:
             $sheet->mergeCells('A9:B9'); $sheet->setCellValue('A9', 'ESTABLECIMIENTO:');
-            $sheet->mergeCells('C9:J9'); $sheet->setCellValue('C9', $historia->establecimiento ?? '');
+            $sheet->mergeCells('C9:J9'); $sheet->setCellValue('C9', mb_strtoupper($historia->establecimiento ?? ''));
             $sheet->getStyle('A9:J9')->applyFromArray($thinBorder);
 
             // --- DATOS PERSONALES ---
@@ -611,11 +615,11 @@ class ReporteMedicoController extends Controller
             $sheet->mergeCells('I12:J12'); $sheet->setCellValue('I12', 'CONSULTA N°');
 
             // Fila 13 (Datos):
-            $sheet->mergeCells('A13:B13'); $sheet->setCellValue('A13', $persona->primer_apellido ?? '');
-            $sheet->mergeCells('C13:D13'); $sheet->setCellValue('C13', $persona->segundo_apellido ?? '');
-            $sheet->mergeCells('E13:F13'); $sheet->setCellValue('E13', $persona->nombres ?? '');
-            $sheet->setCellValue('G13', $persona->sexo ?? '');
-            $sheet->setCellValue('H13', $persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : '');
+            $sheet->mergeCells('A13:B13'); $sheet->setCellValue('A13', mb_strtoupper($persona->primer_apellido ?? ''));
+            $sheet->mergeCells('C13:D13'); $sheet->setCellValue('C13', mb_strtoupper($persona->segundo_apellido ?? ''));
+            $sheet->mergeCells('E13:F13'); $sheet->setCellValue('E13', mb_strtoupper($persona->nombres ?? ''));
+            $sheet->setCellValue('G13', mb_strtoupper($persona->sexo ?? ''));
+            $sheet->setCellValue('H13', ($persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : ''));
             
             $consultaN = ($historia->tipo_consulta == 'N' ? 'X' : '');
             $consultaR = ($historia->tipo_consulta == 'R' ? 'X' : '');
@@ -632,11 +636,12 @@ class ReporteMedicoController extends Controller
             $sheet->mergeCells('I14:J14'); $sheet->setCellValue('I14', 'TELEFONO');
 
             // Fila 15 (Datos):
-            $sheet->mergeCells('A15:B15'); $sheet->setCellValue('A15', $persona->estado_civil ?? '');
-            $sheet->mergeCells('C15:D15'); $sheet->setCellValue('C15', $historia->ocupacion ?? $persona->ocupacion ?? '');
-            $sheet->mergeCells('E15:F15'); $sheet->setCellValue('E15', $historia->grado_instruccion ?? $persona->grado_instruccion ?? '');
+            $sheet->mergeCells('A15:B15'); $sheet->setCellValue('A15', mb_strtoupper($persona->estado_civil ?? ''));
+            // Usar la ocupación/grado de instrucción de HistoriaClinica primero, si no, de Persona
+            $sheet->mergeCells('C15:D15'); $sheet->setCellValue('C15', mb_strtoupper($historia->ocupacion ?? $persona->ocupacion ?? ''));
+            $sheet->mergeCells('E15:F15'); $sheet->setCellValue('E15', mb_strtoupper($historia->grado_instruccion ?? $persona->grado_instruccion ?? ''));
             $sheet->mergeCells('G15:H15'); $sheet->setCellValue('G15', $persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->format('d/m/Y') : '');
-            $sheet->mergeCells('I15:J15'); $sheet->setCellValue('I15', $persona->celular ?? $persona->telefono ?? '');
+            $sheet->mergeCells('I15:J15'); $sheet->setCellValue('I15', mb_strtoupper($persona->celular ?? $persona->telefono ?? ''));
 
             $sheet->getStyle('A14:J15')->applyFromArray($thinBorder);
 
@@ -648,11 +653,23 @@ class ReporteMedicoController extends Controller
             $sheet->mergeCells('I16:J16'); $sheet->setCellValue('I16', 'DEPARTAMENTO');
             
             // Fila 17 (Datos):
-            $sheet->mergeCells('A17:B17'); $sheet->setCellValue('A17', $historia->lugar_nacimiento_provincia ?? $persona->lugar_nacimiento ?? '');
-            $sheet->mergeCells('C17:D17'); $sheet->setCellValue('C17', $persona->zona_comunidad ?? '');
-            $sheet->mergeCells('E17:F17'); $sheet->setCellValue('E17', $historia->domicilio_actual ?? $persona->domicilio ?? '');
-            $sheet->mergeCells('G17:H17'); $sheet->setCellValue('G17', $historia->lugar_nacimiento_provincia ?? '');
-            $sheet->mergeCells('I17:J17'); $sheet->setCellValue('I17', $historia->lugar_nacimiento_departamento ?? '');
+            // Combinar provincia y departamento de nacimiento de historia clínica
+            $lugar_nacimiento_historia = '';
+            if (!empty($historia->lugar_nacimiento_provincia)) {
+                $lugar_nacimiento_historia .= $historia->lugar_nacimiento_provincia;
+            }
+            if (!empty($historia->lugar_nacimiento_departamento)) {
+                if (!empty($lugar_nacimiento_historia)) {
+                    $lugar_nacimiento_historia .= ', ';
+                }
+                $lugar_nacimiento_historia .= $historia->lugar_nacimiento_departamento;
+            }
+            $sheet->mergeCells('A17:B17'); $sheet->setCellValue('A17', mb_strtoupper($lugar_nacimiento_historia ?? $persona->lugar_nacimiento ?? ''));
+            
+            $sheet->mergeCells('C17:D17'); $sheet->setCellValue('C17', mb_strtoupper($persona->zona_comunidad ?? ''));
+            $sheet->mergeCells('E17:F17'); $sheet->setCellValue('E17', mb_strtoupper($historia->domicilio_actual ?? $persona->domicilio ?? ''));
+            $sheet->mergeCells('G17:H17'); $sheet->setCellValue('G17', mb_strtoupper($historia->lugar_nacimiento_provincia ?? ''));
+            $sheet->mergeCells('I17:J17'); $sheet->setCellValue('I17', mb_strtoupper($historia->lugar_nacimiento_departamento ?? ''));
 
             $sheet->getStyle('A16:J17')->applyFromArray($thinBorder);
 
@@ -664,7 +681,7 @@ class ReporteMedicoController extends Controller
             $sheet->getStyle('A' . $currentRowAfterPersonalData)->getFont()->setBold(true);
             $sheet->getStyle('A' . $currentRowAfterPersonalData . ':J' . $currentRowAfterPersonalData)->applyFromArray($doubleBorderBottom);
             $currentRowAfterPersonalData++;
-            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, $historia->antecedentes_personales ?? '');
+            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, mb_strtoupper($historia->antecedentes_personales ?? ''));
             $sheet->getStyle('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1))->applyFromArray($thinBorder);
             $currentRowAfterPersonalData += 2; // Avanza 2 filas por el contenido
 
@@ -673,7 +690,7 @@ class ReporteMedicoController extends Controller
             $sheet->getStyle('A' . $currentRowAfterPersonalData)->getFont()->setBold(true);
             $sheet->getStyle('A' . $currentRowAfterPersonalData . ':J' . $currentRowAfterPersonalData)->applyFromArray($doubleBorderBottom);
             $currentRowAfterPersonalData++;
-            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, $historia->antecedentes_familiares ?? '');
+            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, mb_strtoupper($historia->antecedentes_familiares ?? ''));
             $sheet->getStyle('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1))->applyFromArray($thinBorder);
             $currentRowAfterPersonalData += 2;
 
@@ -682,7 +699,7 @@ class ReporteMedicoController extends Controller
             $sheet->getStyle('A' . $currentRowAfterPersonalData)->getFont()->setBold(true);
             $sheet->getStyle('A' . $currentRowAfterPersonalData)->applyFromArray($doubleBorderBottom);
             $currentRowAfterPersonalData++;
-            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, $historia->estado_actual ?? '');
+            $sheet->mergeCells('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1)); $sheet->setCellValue('A' . $currentRowAfterPersonalData, mb_strtoupper($historia->estado_actual ?? ''));
             $sheet->getStyle('A' . $currentRowAfterPersonalData . ':J' . ($currentRowAfterPersonalData + 1))->applyFromArray($thinBorder);
             $currentRowAfterPersonalData += 2;
 
@@ -704,16 +721,16 @@ class ReporteMedicoController extends Controller
 
             // Fila (Datos de ExamenComplementario):
             // Se usa $examenComplementario?->propiedad ?? '' para acceder de forma segura al objeto
-            $sheet->mergeCells('A' . $currentRowExamenes . ':C' . $currentRowExamenes); $sheet->setCellValue('A' . $currentRowExamenes, $examenComplementario->presion_arterial ?? '');
-            $sheet->mergeCells('D' . $currentRowExamenes . ':F' . $currentRowExamenes); $sheet->setCellValue('D' . $currentRowExamenes, $examenComplementario->temperatura ?? '');
-            $sheet->mergeCells('G' . $currentRowExamenes . ':J' . $currentRowExamenes); $sheet->setCellValue('G' . $currentRowExamenes, $examenComplementario->peso_corporal ?? '');
+            $sheet->mergeCells('A' . $currentRowExamenes . ':C' . $currentRowExamenes); $sheet->setCellValue('A' . $currentRowExamenes, mb_strtoupper($examenComplementario->presion_arterial ?? ''));
+            $sheet->mergeCells('D' . $currentRowExamenes . ':F' . $currentRowExamenes); $sheet->setCellValue('D' . $currentRowExamenes, mb_strtoupper($examenComplementario->temperatura ?? ''));
+            $sheet->mergeCells('G' . $currentRowExamenes . ':J' . $currentRowExamenes); $sheet->setCellValue('G' . $currentRowExamenes, mb_strtoupper($examenComplementario->peso_corporal ?? ''));
             $sheet->getStyle('A' . ($currentRowExamenes - 1) . ':J' . $currentRowExamenes)->applyFromArray($thinBorder);
             $currentRowExamenes++;
 
             // --- RESULTADO DE LA PRUEBA... y DIAGNOSTICO ---
             $currentRowExamenes++; // Espacio en blanco
             $sheet->mergeCells('A' . $currentRowExamenes . ':J' . $currentRowExamenes);
-            $sheet->setCellValue('A' . $currentRowExamenes, 'RESULTADO DE LA PRUEBA (mg/dl): ' . ($examenComplementario->resultado_prueba ?? '') . ' DIAGNOSTICO: ' . ($examenComplementario->diagnostico ?? ''));
+            $sheet->setCellValue('A' . $currentRowExamenes, 'RESULTADO DE LA PRUEBA (MG/DL): ' . mb_strtoupper($examenComplementario->resultado_prueba ?? '') . ' DIAGNOSTICO: ' . mb_strtoupper($examenComplementario->diagnostico ?? ''));
             $sheet->getStyle('A' . $currentRowExamenes)->getFont()->setBold(true);
             $sheet->getStyle('A' . $currentRowExamenes)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
             $sheet->getStyle('A' . $currentRowExamenes . ':J' . $currentRowExamenes)->applyFromArray($doubleBorderBottom);
@@ -733,7 +750,7 @@ class ReporteMedicoController extends Controller
             $currentMedRow++;
 
             // Fila de encabezados de la tabla de medicamentos
-            $sheet->mergeCells('A' . $currentMedRow . ':F' . $currentMedRow); $sheet->setCellValue('A' . $currentMedRow, '(Nombre Genérico, Forma Farmacéutica y Concentración)');
+            $sheet->mergeCells('A' . $currentMedRow . ':F' . $currentMedRow); $sheet->setCellValue('A' . $currentMedRow, '(NOMBRE GENÉRICO, FORMA FARMACÉUTICA Y CONCENTRACIÓN)');
             $sheet->setCellValue('G' . $currentMedRow, 'CANTIDAD RECETADA');
             $sheet->setCellValue('H' . $currentMedRow, 'CANTIDAD DISPENSADA');
             $sheet->setCellValue('I' . $currentMedRow, 'VALOR UNITARIO');
@@ -755,11 +772,11 @@ class ReporteMedicoController extends Controller
                 $currentMedRow++;
             } else {
                 foreach ($medicamentosRecetados as $medicamento) {
-                    $sheet->mergeCells('A' . $currentMedRow . ':F' . $currentMedRow); $sheet->setCellValue('A' . $currentMedRow, $medicamento->nombre_medicamento ?? '');
-                    $sheet->setCellValue('G' . $currentMedRow, $medicamento->cantidad_recetada ?? '');
-                    $sheet->setCellValue('H' . $currentMedRow, $medicamento->cantidad_dispensada ?? '');
-                    $sheet->setCellValue('I' . $currentMedRow, $medicamento->valor_unitario ?? '');
-                    $sheet->setCellValue('J' . $currentMedRow, $medicamento->total ?? '');
+                    $sheet->mergeCells('A' . $currentMedRow . ':F' . $currentMedRow); $sheet->setCellValue('A' . $currentMedRow, mb_strtoupper($medicamento->nombre_medicamento ?? ''));
+                    $sheet->setCellValue('G' . $currentMedRow, mb_strtoupper($medicamento->cantidad_recetada ?? ''));
+                    $sheet->setCellValue('H' . $currentMedRow, mb_strtoupper($medicamento->cantidad_dispensada ?? ''));
+                    $sheet->setCellValue('I' . $currentMedRow, mb_strtoupper($medicamento->valor_unitario ?? ''));
+                    $sheet->setCellValue('J' . $currentMedRow, mb_strtoupper($medicamento->total ?? ''));
                     $sheet->getStyle('A' . $currentMedRow . ':J' . $currentMedRow)->applyFromArray($thinBorder);
                     $sheet->getStyle('G' . $currentMedRow . ':J' . $currentMedRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     $currentMedRow++;
@@ -772,7 +789,7 @@ class ReporteMedicoController extends Controller
             $sheet->mergeCells('A' . $currentRow . ':C' . $currentRow); $sheet->setCellValue('A' . $currentRow, 'RESPONSABLE');
             $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
             $sheet->getStyle('A' . $currentRow)->applyFromArray($doubleBorderBottom);
-            $sheet->mergeCells('D' . $currentRow . ':F' . $currentRow); $sheet->setCellValue('D' . $currentRow, ($personaUsuario->nombres ?? '') . ' ' . ($personaUsuario->primer_apellido ?? ''));
+            $sheet->mergeCells('D' . $currentRow . ':F' . $currentRow); $sheet->setCellValue('D' . $currentRow, mb_strtoupper(($personaUsuario->nombres ?? '') . ' ' . ($personaUsuario->primer_apellido ?? '')));
             $sheet->getStyle('D' . $currentRow . ':F' . $currentRow)->applyFromArray($doubleBorderBottom);
             
             $sheet->mergeCells('H' . $currentRow . ':J' . $currentRow); $sheet->setCellValue('H' . $currentRow, 'FIRMA DEL PACIENTE');
@@ -780,8 +797,8 @@ class ReporteMedicoController extends Controller
             $sheet->getStyle('H' . $currentRow)->applyFromArray($doubleBorderBottom);
 
             $currentRow++;
-            $sheet->mergeCells('D' . $currentRow . ':F' . $currentRow); $sheet->setCellValue('D' . $currentRow, 'C.I. ' . ($personaUsuario->ci ?? ''));
-            $sheet->mergeCells('H' . $currentRow . ':J' . $currentRow); $sheet->setCellValue('H' . $currentRow, 'C.I. ' . ($persona->ci ?? ''));
+            $sheet->mergeCells('D' . $currentRow . ':F' . $currentRow); $sheet->setCellValue('D' . $currentRow, 'C.I. ' . mb_strtoupper($personaUsuario->ci ?? ''));
+            $sheet->mergeCells('H' . $currentRow . ':J' . $currentRow); $sheet->setCellValue('H' . $currentRow, 'C.I. ' . mb_strtoupper($persona->ci ?? ''));
 
             foreach (range('A', 'J') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
@@ -798,7 +815,7 @@ class ReporteMedicoController extends Controller
 
 
             $writer = new Xlsx($spreadsheet);
-            $fileName = 'Historia_Clinica_' . ($persona->primer_apellido ?? 'Desconocido') . '_' . ($persona->nombres ?? 'Desconocido') . '_' . Carbon::now()->format('Ymd_His') . '.xlsx';
+            $fileName = 'Historia_Clinica_' . mb_strtoupper(($persona->primer_apellido ?? 'Desconocido')) . '_' . mb_strtoupper(($persona->nombres ?? 'Desconocido')) . '_' . Carbon::now()->format('Ymd_His') . '.xlsx';
 
             return response()->streamDownload(function() use ($writer) {
                 $writer->save('php://output');

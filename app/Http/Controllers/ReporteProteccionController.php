@@ -29,6 +29,9 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
 use PhpOffice\PhpWord\SimpleType\Jc; // Para alineación de texto y elementos (START, END, CENTER)
 use PhpOffice\PhpWord\Style\Image; // Para posicionamiento de imagen
 
+// Para la generación de PDF con Dompdf
+use Barryvdh\DomPDF\Facade\Pdf; // Importa el Facade de DomPDF
+
 class ReporteProteccionController extends Controller
 {
     /**
@@ -606,6 +609,66 @@ class ReporteProteccionController extends Controller
         } catch (\Exception $e) {
             Log::error('Error al generar Word de la Ficha de Protección individual (id_adulto: ' . $id_adulto . '): ' . $e->getMessage(), ['exception' => $e]);
             return back()->with('error', 'Ocurrió un error al generar el Word de la Ficha de Protección: ' . $e->getMessage());
+        }
+    }
+    public function exportarFichaProteccionPdfIndividual(int $id_adulto)
+    {
+        try {
+            // Cargar AdultoMayor con todas las relaciones necesarias, incluyendo seguimientos y sus intervenciones
+            $adulto = AdultoMayor::with([
+                'persona', 
+                'actividadLaboral',
+                'encargados.personaNatural',
+                'encargados.personaJuridica',
+                'denunciado.personaNatural',
+                'grupoFamiliar',
+                'croquis',
+                'seguimientos.usuario.persona', 
+                'seguimientos.intervencion', // <--- Carga la intervención a través del seguimiento
+                'anexoN3.personaNatural',
+                'anexoN5.usuario.persona',
+            ])->findOrFail($id_adulto);
+
+            // Accedemos a encargados directamente, ya que es hasOne y devuelve un objeto o null
+            $informante = $adulto->encargados; 
+            // Acceder a la relación denuncianteCroquis directamente, ya que es hasOne
+            $denuncianteCroquis = $adulto->denuncianteCroquis; 
+
+            // Lógica para obtener la Intervención del último seguimiento que tenga una.
+            $intervencion = null;
+            // Ordena los seguimientos por fecha de creación descendente y busca la primera intervención
+            foreach ($adulto->seguimientos->sortByDesc('created_at') as $seg) {
+                if ($seg->intervencion) {
+                    $intervencion = $seg->intervencion;
+                    break; // Una vez encontrada, salimos
+                }
+            }
+
+            $data = [
+                'adulto' => $adulto,
+                'informante' => $informante,
+                'denuncianteCroquis' => $denuncianteCroquis,
+                'intervencion' => $intervencion, // Pasamos la intervención encontrada a la vista
+            ];
+
+            // Cargar la vista Blade y generar el PDF
+            $pdf = Pdf::loadView('Proteccion.pdf_ficha_proteccion', $data);
+
+            // Configurar el nombre del archivo
+            $nombreAdulto = mb_strtoupper(trim(
+                (optional($adulto->persona)->nombres ?? '') . '_' . 
+                (optional($adulto->persona)->primer_apellido ?? '')
+            ));
+            $fileName = 'FICHA_PROTECCION_' . mb_strtoupper(optional($adulto)->nro_caso ?? 'N_A') . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+            $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
+            $fileName = substr($fileName, 0, 200); 
+
+            // Retornar el PDF para descarga
+            return $pdf->download($fileName);
+
+        } catch (\Exception $e) {
+            Log::error('Error al generar PDF de la Ficha de Protección individual (id_adulto: ' . $id_adulto . '): ' . $e->getMessage(), ['exception' => $e]);
+            return back()->with('error', 'Ocurrió un error al generar el PDF de la Ficha de Protección: ' . $e->getMessage());
         }
     }
 }

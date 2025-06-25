@@ -15,6 +15,8 @@ use PhpOffice\PhpWord\SimpleType\VerticalJc;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
 use PhpOffice\PhpWord\SimpleType\Jc; // Importar para alineación de texto y elementos (START, END, CENTER)
 use PhpOffice\PhpWord\Style\Image; // ¡Nueva importación para POS_HORIZONTAL_LEFT y POS_VERTICAL_TOP!
+    // Para la generación de PDF con Dompdf
+use Barryvdh\DomPDF\Facade\Pdf; // Importa el Facade de DomPDF
 
 
 class ReporteOrientacionController extends Controller
@@ -134,8 +136,8 @@ class ReporteOrientacionController extends Controller
 
             // --- Estilos de párrafo ---
             $phpWord->addParagraphStyle('P_Center', ['align' => Jc::CENTER, 'spaceAfter' => 0, 'spaceBefore' => 0]);
-            $phpWord->addParagraphStyle('P_Start', ['align' => Jc::START, 'spaceAfter' => 0, 'spaceBefore' => 0]); // Usar Jc::START
-            $phpWord->addParagraphStyle('P_End', ['align' => Jc::END, 'spaceAfter' => 0, 'spaceBefore' => 0]);     // Usar Jc::END
+            $phpWord->addParagraphStyle('P_Start', ['align' => Jc::START, 'spaceAfter' => 0, 'spaceBefore' => 0]);
+            $phpWord->addParagraphStyle('P_End', ['align' => Jc::END, 'spaceAfter' => 0, 'spaceBefore' => 0]);
             $phpWord->addParagraphStyle('P_Indent', ['indentation' => ['left' => 360], 'spaceAfter' => 0, 'spaceBefore' => 0]); 
             $phpWord->addParagraphStyle('P_SpacingSmall', ['spaceAfter' => 60]); 
             $phpWord->addParagraphStyle('P_SpacingMedium', ['spaceAfter' => 120]); 
@@ -155,7 +157,7 @@ class ReporteOrientacionController extends Controller
                     [
                         'width'            => 80,   
                         'height'           => 80,   
-                        'alignment'        => Jc::START, // Usar Jc::START para alineación
+                        'alignment'        => Jc::START,
                         'marginTop'        => 0,
                         'marginLeft'       => 0,
                         'wrappingStyle'    => 'tight', 
@@ -168,7 +170,7 @@ class ReporteOrientacionController extends Controller
                 );
             } else {
                 Log::warning('Logo no encontrado en: ' . $logoPath);
-                $logoCell->addText(' [Logo Faltante] ', 'valueStyle', 'P_Start'); // Usar P_Start
+                $logoCell->addText(' [LOGO FALTANTE] ', 'valueStyle', 'P_Start');
             }
 
             // Celda para el texto del encabezado (derecha)
@@ -182,12 +184,12 @@ class ReporteOrientacionController extends Controller
             $section->addTextBreak(1); 
 
             // FECHA DE INGRESO y CASO Nº
-            $fechaIngreso = optional($orientacion->fecha_ingreso)->format('d/m/Y') ?? 'N/A';
+            $fechaIngreso = optional($orientacion->created_at)->format('d/m/Y H:i') ?? 'N/A'; // Usar created_at como fecha de ingreso si es la de registro
             $casoNro = $orientacion->cod_or ?? 'N/A'; 
             $tableFechaCaso = $section->addTable(['width' => 9500, 'unit' => TblWidth::TWIP]);
             $tableFechaCaso->addRow();
-            $tableFechaCaso->addCell(4750)->addText('FECHA DE INGRESO: ' . $fechaIngreso, 'valueStyle', 'P_Start'); // Usar P_Start
-            $tableFechaCaso->addCell(4750)->addText('CASO Nº: ' . $casoNro, 'valueStyle', 'P_End');     // Usar P_End
+            $tableFechaCaso->addCell(4750)->addText('FECHA DE INGRESO: ' . mb_strtoupper($fechaIngreso), 'valueStyle', 'P_Start');
+            $tableFechaCaso->addCell(4750)->addText('CASO Nº: ' . mb_strtoupper($casoNro), 'valueStyle', 'P_End');
             $section->addTextBreak(1);
 
             // Tipos de Orientación (replicando checkboxes)
@@ -197,52 +199,54 @@ class ReporteOrientacionController extends Controller
 
             $section->addText('ORIENTACION PSICOLOGICA ( ' . $tipoPsicologica . ' )');
             $section->addText('ORIENTACION SOCIAL       ( ' . $tipoSocial . ' )');
-            $section->addText('ORIENTACION LEGAL          ( ' . $tipoLegal . ' )');
+            $section->addText('ORIENTACION LEGAL         ( ' . $tipoLegal . ' )');
             $section->addTextBreak(1);
 
             // Datos de Identificación del Adulto Mayor
-            $section->addText('DATOS DE IDENTIFICACION DEL ADULTO MAYOR Y/O SOLICITANTE:', 'sectionTitleStyle', 'P_Start'); // Usar P_Start
+            $section->addText('DATOS DE IDENTIFICACION DEL ADULTO MAYOR Y/O SOLICITANTE:', 'sectionTitleStyle', 'P_Start');
             $section->addTextBreak(1); 
 
             $tableDatosIdentificacion = $section->addTable([
                 'borderColor' => 'FFFFFF',
                 'borderSize' => 0,
                 'cellMargin' => 0,
-                'alignment' => Jc::START, // Usar Jc::START
+                'alignment' => Jc::START,
                 'width' => 9500, 
                 'unit' => TblWidth::TWIP,
             ]); 
 
-            $nombreCompleto = trim(optional($persona)->nombres . ' ' .
-                              optional($persona)->primer_apellido . ' ' .
-                              optional($persona)->segundo_apellido);
+            $nombreCompleto = trim(
+                mb_strtoupper(optional($persona)->nombres ?? '') . ' ' .
+                mb_strtoupper(optional($persona)->primer_apellido ?? '') . ' ' .
+                mb_strtoupper(optional($persona)->segundo_apellido ?? '')
+            );
             $nombreCompleto = $nombreCompleto ?: 'N/A';
-            $edad = optional($persona)->edad ?? 'N/A';
+            $edad = optional($persona)->edad ?? 'N/A'; // Edad es numérica, no se convierte a mayúsculas
 
-            $barrioComunidad = (optional($persona)->zona_comunidad ?? 'N/A') . ' / ' . (optional($persona)->direccion ?? 'N/A');
-            $telefono = optional($persona)->celular ?? 'N/A'; 
+            $barrioComunidad = mb_strtoupper(optional($persona)->zona_comunidad ?? 'N/A') . ' / ' . mb_strtoupper(optional($persona)->domicilio ?? 'N/A');
+            $telefono = mb_strtoupper(optional($persona)->celular ?? 'N/A'); // Asumiendo que teléfono/celular podría ser string
 
             // Primera fila de la tabla de identificación: NOMBRE COMPLETO y EDAD
             $tableDatosIdentificacion->addRow();
-            $tableDatosIdentificacion->addCell(6000)->addText('NOMBRE COMPLETO: ' . $nombreCompleto, 'valueStyle', 'P_Start'); // Usar P_Start
-            $tableDatosIdentificacion->addCell(3500)->addText('EDAD: ' . $edad, 'valueStyle', 'P_Start'); // Usar P_Start
+            $tableDatosIdentificacion->addCell(6000)->addText('NOMBRE COMPLETO: ' . $nombreCompleto, 'valueStyle', 'P_Start');
+            $tableDatosIdentificacion->addCell(3500)->addText('EDAD: ' . $edad, 'valueStyle', 'P_Start');
             
             // Segunda fila de la tabla de identificación: BARRIO/COMUNIDAD y TELEFONO
             $tableDatosIdentificacion->addRow();
-            $tableDatosIdentificacion->addCell(6000)->addText('BARRIO/COMUNIDAD: ' . $barrioComunidad, 'valueStyle', 'P_Start'); // Usar P_Start
-            $tableDatosIdentificacion->addCell(3500)->addText('TELEFONO: ' . $telefono, 'valueStyle', 'P_Start'); // Usar P_Start
+            $tableDatosIdentificacion->addCell(6000)->addText('BARRIO/COMUNIDAD: ' . $barrioComunidad, 'valueStyle', 'P_Start');
+            $tableDatosIdentificacion->addCell(3500)->addText('TELEFONO: ' . $telefono, 'valueStyle', 'P_Start');
             $section->addTextBreak(2); 
 
             // Motivos de Orientación
-            $section->addText('MOTIVOS DE ORIENTACION', 'labelStyle', 'P_Start'); // Usar P_Start
-            $motivoOrientacion = $orientacion->motivo_orientacion ?? 'No especificado.';
-            $section->addText($motivoOrientacion, 'valueStyle', 'P_Start'); // Usar P_Start
+            $section->addText('MOTIVOS DE ORIENTACION', 'labelStyle', 'P_Start');
+            $motivoOrientacion = mb_strtoupper($orientacion->motivo_orientacion ?? 'NO ESPECIFICADO.');
+            $section->addText($motivoOrientacion, 'valueStyle', 'P_Start');
             $section->addTextBreak(5); 
 
             // Resultados Obtenidos
-            $section->addText('RESULTADOS OBTENIDOS EN RELACION A LA ENTREVISTA DE ORIENTACION', 'labelStyle', 'P_Start'); // Usar P_Start
-            $resultadosObtenidos = $orientacion->resultado_obtenido ?? 'No especificados.';
-            $section->addText($resultadosObtenidos, 'valueStyle', 'P_Start'); // Usar P_Start
+            $section->addText('RESULTADOS OBTENIDOS EN RELACION A LA ENTREVISTA DE ORIENTACION', 'labelStyle', 'P_Start');
+            $resultadosObtenidos = mb_strtoupper($orientacion->resultado_obtenido ?? 'NO ESPECIFICADOS.');
+            $section->addText($resultadosObtenidos, 'valueStyle', 'P_Start');
             $section->addTextBreak(5); 
 
             // Nota de Violencia
@@ -271,8 +275,11 @@ class ReporteOrientacionController extends Controller
             // Preparar el archivo para la descarga
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007'); 
 
-            $nombreAdulto = (optional($persona)->nombres ?? '') . '_' . (optional($persona)->primer_apellido ?? '');
-            $fileName = 'ficha_orientacion_' . $orientacion->cod_or . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd') . '.docx';
+            $nombreAdulto = mb_strtoupper(trim(
+                (optional($persona)->nombres ?? '') . '_' . 
+                (optional($persona)->primer_apellido ?? '')
+            ));
+            $fileName = 'FICHA_ORIENTACION_' . mb_strtoupper($orientacion->cod_or) . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd') . '.docx';
             $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
             $fileName = substr($fileName, 0, 200); 
 
@@ -291,4 +298,38 @@ class ReporteOrientacionController extends Controller
             return back()->with('error', 'Ocurrió un error al generar el Word de la Ficha de Orientación: ' . $e->getMessage());
         }
     }
+    public function exportarFichaOrientacionPdfIndividual(int $cod_or)
+        {
+            try {
+                // Cargar la ficha de orientación con sus relaciones necesarias
+                $orientacion = Orientacion::with('adulto.persona')->findOrFail($cod_or);
+                
+                // Preparar los datos para la vista del PDF.
+                // Aquí podrías procesar los datos para convertirlos a mayúsculas si es necesario,
+                // aunque la vista Blade del PDF también puede manejarlo con mb_strtoupper().
+                $data = [
+                    'orientacion' => $orientacion,
+                ];
+
+                // Cargar la vista Blade y generar el PDF
+                $pdf = Pdf::loadView('Orientacion.pdf_ficha_orientacion', $data);
+
+                // Configurar el nombre del archivo
+                $nombreAdulto = mb_strtoupper(trim(
+                    (optional($orientacion->adulto->persona)->nombres ?? '') . '_' . 
+                    (optional($orientacion->adulto->persona)->primer_apellido ?? '')
+                ));
+                $fileName = 'FICHA_ORIENTACION_' . mb_strtoupper($orientacion->cod_or) . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+                // Asegurar un nombre de archivo válido
+                $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
+                $fileName = substr($fileName, 0, 200); 
+
+                // Retornar el PDF para descarga
+                return $pdf->download($fileName);
+
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de la Ficha de Orientación individual (cod_or: ' . $cod_or . '): ' . $e->getMessage(), ['exception' => $e]);
+                return back()->with('error', 'Ocurrió un error al generar el PDF de la Ficha de Orientación: ' . $e->getMessage());
+            }
+        }
 }

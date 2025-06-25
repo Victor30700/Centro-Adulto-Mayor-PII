@@ -225,6 +225,7 @@ Route::middleware('guest')->group(function () {
                 Route::get('/', [ReporteProteccionController::class, 'index'])->name('index');
                 Route::get('{id_adulto}/ver', [ReporteProteccionController::class, 'showReporte'])->name('showReporte');
                 Route::get('/{id_adulto}/exportar-word', [ReporteProteccionController::class, 'exportarFichaProteccionWordIndividual'])->name('exportWordIndividual');
+                Route::get('/{id_adulto}/exportar-pdf', [ReporteProteccionController::class, 'exportarFichaProteccionPdfIndividual'])->name('exportPdfIndividual');           
             });
         
             // ##########################################################################################################################
@@ -243,6 +244,8 @@ Route::middleware('guest')->group(function () {
                 Route::get('{cod_or}/ver', [ReporteOrientacionController::class, 'showReporte'])->name('show_reporte');
                 Route::delete('eliminar/{cod_or}', [ReporteOrientacionController::class, 'destroy'])->name('destroy');
                 Route::get('/{cod_or}/exportar-word', [ReporteOrientacionController::class, 'exportarFichaOrientacionWordIndividual'])->name('exportWordIndividual');
+                Route::get('/{cod_or}/exportar-pdf', [ReporteOrientacionController::class, 'exportarFichaOrientacionPdfIndividual'])->name('exportPdfIndividual');
+
             });
         });
 

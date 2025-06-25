@@ -580,7 +580,7 @@ class ReporteFisioKineController extends Controller
                 $sheet->setCellValue('H' . $currentRow, ($fichaKine->hidroterapia ? 'X' : ''));
                 $sheet->setCellValue('I' . $currentRow, ($fichaKine->manana ? 'X' : ''));
                 $sheet->setCellValue('J' . $currentRow, ($fichaKine->tarde ? 'X' : ''));
-                $sheet->setCellValue('K' . $currentRow, optional($fichaKine->historiaClinica)->lugar_nacimiento ?? 'N/A');
+                $sheet->setCellValue('K' . $currentRow, optional($fichaKine->historiaClinica)->lugar_nacimiento_departamento ?? 'N/A');
                 $sheet->setCellValue('L' . $currentRow, (optional($fichaKine->adulto->persona)->zona_comunidad ?? 'N/A') . ' / ' . (optional($fichaKine->adulto->persona)->domicilio ?? 'N/A'));
                 $sheet->setCellValue('M' . $currentRow, ''); // Columna de Firma (vacía para que firmen a mano)
 
