@@ -101,6 +101,112 @@ class AdminController extends Controller
         return view('Admin.registerUsers.registerResponsable.registerRes');
     }
 
+    // ==================================================================
+    // ===               INICIO: SOLUCIÓN DEL ERROR                   ===
+    // ==================================================================
+    /**
+     * Almacena un nuevo usuario con el rol 'legal' en la base de datos.
+     * ESTE ES EL MÉTODO QUE FALTABA Y SOLUCIONA EL ERROR.
+     */
+    public function storeUsuarioLegal(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            // Pestaña 1: Datos Personales (tabla 'persona')
+            'nombres' => 'required|string|max:255',
+            'primer_apellido' => 'required|string|max:255',
+            'segundo_apellido' => 'nullable|string|max:255',
+            'ci' => 'required|string|max:20|unique:persona,ci',
+            'fecha_nacimiento' => 'required|date|before_or_equal:today',
+            'sexo' => 'required|string|in:F,M,O',
+            'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
+            'domicilio' => 'required|string|max:255',
+            'telefono' => 'required|string|max:20',
+            'zona_comunidad' => 'nullable|string|max:100',
+            'area_especialidad_legal' => 'required|string|in:Derecho,Psicologia,Trabajo-Social,otro',
+
+            // Pestaña 2: Datos de Usuario (tabla 'users')
+            'id_rol' => 'required|integer|exists:rol,id_rol',
+            'password' => 'required|string|min:8|confirmed',
+            'terms_acceptance' => 'accepted' // Importante para validar el checkbox
+        ], [
+            // Mensajes personalizados
+            'nombres.required' => 'El campo nombres es obligatorio.',
+            'primer_apellido.required' => 'El campo primer apellido es obligatorio.',
+            'ci.required' => 'El campo CI es obligatorio.',
+            'ci.unique' => 'Este CI ya ha sido registrado.',
+            'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
+            'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
+            'sexo.required' => 'El campo sexo es obligatorio.',
+            'estado_civil.required' => 'El estado civil es obligatorio.',
+            'domicilio.required' => 'El domicilio es obligatorio.',
+            'telefono.required' => 'El teléfono es obligatorio.',
+            'area_especialidad_legal.required' => 'El área de especialidad legal es obligatoria.',
+            'area_especialidad_legal.in' => 'El área de especialidad seleccionada no es válida.',
+            'id_rol.required' => 'El rol es obligatorio.',
+            'id_rol.exists' => 'El rol seleccionado no es válido.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'La confirmación de contraseña no coincide.',
+            'terms_acceptance.accepted' => 'Debe aceptar los términos y condiciones.'
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                              ->withErrors($validator)
+                              ->withInput();
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Calcular edad
+            $edad = Carbon::parse($request->fecha_nacimiento)->age;
+
+            // 1. Crear Persona
+            Persona::create([
+                'ci' => $request->ci,
+                'primer_apellido' => $request->primer_apellido,
+                'segundo_apellido' => $request->segundo_apellido,
+                'nombres' => $request->nombres,
+                'sexo' => $request->sexo,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'edad' => $edad,
+                'estado_civil' => $request->estado_civil,
+                'domicilio' => $request->domicilio,
+                'telefono' => $request->telefono,
+                'zona_comunidad' => $request->zona_comunidad,
+                'area_especialidad_legal' => $request->area_especialidad_legal,
+                'area_especialidad' => null, // Aseguramos que el otro campo de especialidad sea nulo
+            ]);
+
+            // 2. Crear Usuario
+            User::create([
+                'ci' => $request->ci,
+                'id_rol' => $request->id_rol,
+                'name' => $request->nombres . ' ' . $request->primer_apellido,
+                'password' => Hash::make($request->password),
+                'active' => true,
+                'login_attempts' => 0,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.dashboard')
+                              ->with('success', 'Usuario Legal registrado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error registrando usuario legal: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+            return redirect()->back()
+                              ->withErrors(['error_registro' => 'Ocurrió un error interno al registrar al usuario. Por favor, inténtelo más tarde.'])
+                              ->withInput();
+        }
+    }
+    // ==================================================================
+    // ===                 FIN: SOLUCIÓN DEL ERROR                    ===
+    // ==================================================================
+
+
  public function storeAdultoMayor(Request $request)
     {
         // Agregar logging para depuración
@@ -267,15 +373,32 @@ class AdminController extends Controller
 
 
     /**
-    * Buscar adultos mayores (AJAX)
-    */
-   public function buscarAdultoMayor(Request $request)
+     * Buscar adultos mayores (AJAX)
+     */
+    public function buscarAdultoMayor(Request $request)
     {
         try {
             $busqueda = $request->get('busqueda', '');
             
-            // Se inicia la consulta con el Modelo Eloquent
-            $query = AdultoMayor::join('persona as p', 'adulto_mayor.ci', '=', 'p.ci')
+            // ==================================================================
+            // ===                 INICIO: SOLUCIÓN DEL ERROR                 ===
+            // ==================================================================
+            
+            // Se inicia la consulta con el alias 'am'
+            $query = AdultoMayor::from('adulto_mayor as am')
+                
+                // *** CORRECCIÓN CLAVE Y DEFINITIVA ***
+                // 1. withTrashed(): Le dice a Eloquent que IGNORE temporalmente el filtro automático
+                //    de SoftDeletes para esta consulta. Esto evita que agregue la cláusula
+                //    "adulto_mayor"."deleted_at" que causa el error.
+                ->withTrashed()
+                
+                ->join('persona as p', 'am.ci', '=', 'p.ci')
+                
+                // 2. whereNull('am.deleted_at'): Añadimos manualmente la condición para obtener
+                //    solo los registros no eliminados, pero esta vez usando el alias correcto 'am'.
+                ->whereNull('am.deleted_at')
+                
                 ->select([
                     'p.ci',
                     'p.nombres',
@@ -307,8 +430,12 @@ class AdminController extends Controller
             }
 
             $adultosMayores = $query->orderBy('p.primer_apellido', 'asc')
-                                     ->orderBy('p.nombres', 'asc')
-                                     ->paginate(10);
+                                    ->orderBy('p.nombres', 'asc')
+                                    ->paginate(10);
+
+            // ==================================================================
+            // ===                  FIN: SOLUCIÓN DEL ERROR                   ===
+            // ==================================================================
 
             return response()->json([
                 'success' => true,
