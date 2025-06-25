@@ -160,21 +160,6 @@
                                                         <span class="detail-label">Número de Emergencia:</span>
                                                         <span class="detail-value">{{ $fisioterapia->num_emergencia ?? 'No especificado' }}</span>
                                                     </div>
-                                                    {{-- Datos de Historia Clínica, si están disponibles y se quieren mostrar aquí --}}
-                                                    @if($fisioterapia->historiaClinica)
-                                                        <div class="detail-row">
-                                                            <span class="detail-label">ID Historia Clínica:</span>
-                                                            <span class="detail-value">{{ $fisioterapia->historiaClinica->id_historia }}</span>
-                                                        </div>
-                                                        <div class="detail-row">
-                                                            <span class="detail-label">Diagnóstico Médico:</span>
-                                                            <span class="detail-value">{{ $fisioterapia->historiaClinica->diagnostico_medico ?? 'N/A' }}</span>
-                                                        </div>
-                                                        <div class="detail-row">
-                                                            <span class="detail-label">Medicamentos Actuales (HC):</span>
-                                                            <span class="detail-value">{{ $fisioterapia->historiaClinica->medicamentos_actuales ?? 'N/A' }}</span>
-                                                        </div>
-                                                    @endif
                                                 </div>
                                             </div>
                                         </div>

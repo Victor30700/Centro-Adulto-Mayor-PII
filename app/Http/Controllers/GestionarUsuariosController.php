@@ -69,6 +69,7 @@ class GestionarUsuariosController extends Controller
      */
     public function update(Request $request, $id_usuario)
     {
+        // ... (Este método se mantiene sin cambios)
         $user = User::with('persona')->findOrFail($id_usuario);
         $persona = $user->persona;
 
@@ -151,9 +152,6 @@ class GestionarUsuariosController extends Controller
 
             // Actualizar datos de User
             $userData = []; // Iniciar array vacío
-
-            // CORRECCIÓN: Se elimina la asignación a 'name', que no existe en la tabla 'usuario'.
-            // El nombre se obtiene a través de la relación con 'persona'.
             
             if (optional($user->rol)->nombre_rol !== 'adulto_mayor') {
                 $userData['id_rol'] = $request->id_rol;
@@ -162,7 +160,6 @@ class GestionarUsuariosController extends Controller
                 $userData['password'] = Hash::make($request->password);
             }
 
-            // Solo actualiza el modelo si hay datos para cambiar.
             if (!empty($userData)) {
                 $user->update($userData);
             }
@@ -184,11 +181,13 @@ class GestionarUsuariosController extends Controller
         $user = User::findOrFail($id_usuario);
 
         if (Auth::id() == $id_usuario) {
-            return response()->json(['success' => false, 'message' => 'No puedes eliminar tu propia cuenta.'], 403);
+            // --- CAMBIO: De JSON a redirección con mensaje de error ---
+            return redirect()->back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
         
         if (optional($user->rol)->nombre_rol === 'superadmin') {
-            return response()->json(['success' => false, 'message' => 'No se puede eliminar al superadministrador.'], 403);
+            // --- CAMBIO: De JSON a redirección con mensaje de error ---
+            return redirect()->back()->with('error', 'No se puede eliminar al superadministrador.');
         }
 
         DB::beginTransaction();
@@ -202,11 +201,16 @@ class GestionarUsuariosController extends Controller
             }
             DB::commit();
             Log::info("Usuario CI: {$user->ci} y persona asociada eliminados (lógicamente) por el administrador.");
-            return response()->json(['success' => true, 'message' => 'Usuario eliminado exitosamente.']);
+            
+            // --- CAMBIO PRINCIPAL: De JSON a redirección con mensaje de éxito ---
+            return redirect()->route('admin.gestionar-usuarios.index')->with('success', 'Usuario eliminado exitosamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error al eliminar usuario {$id_usuario}: " . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error al eliminar el usuario.'], 500);
+
+            // --- CAMBIO: De JSON a redirección con mensaje de error ---
+            return redirect()->route('admin.gestionar-usuarios.index')->with('error', 'Ocurrió un error al eliminar el usuario.');
         }
     }
 
@@ -216,6 +220,7 @@ class GestionarUsuariosController extends Controller
      */
     public function toggleActivity($id_usuario)
     {
+        // ... (Este método se mantiene sin cambios)
         $user = User::findOrFail($id_usuario);
         
         if (Auth::id() == $id_usuario) {
@@ -223,8 +228,8 @@ class GestionarUsuariosController extends Controller
         }
 
         $user->active = !$user->active;
-        $user->login_attempts = 0; // Resetear intentos al cambiar estado
-        $user->temporary_lockout_until = null; // Quitar bloqueo temporal
+        $user->login_attempts = 0;
+        $user->temporary_lockout_until = null;
         $user->save();
 
         $status = $user->active ? 'activado' : 'desactivado';

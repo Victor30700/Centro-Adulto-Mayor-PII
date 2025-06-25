@@ -23,6 +23,10 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
             
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
+           
             // Claves foráneas
             $table->foreign('ci')->references('ci')->on('persona')->onDelete('cascade');
             $table->foreign('id_rol')->references('id_rol')->on('rol')->onDelete('cascade');

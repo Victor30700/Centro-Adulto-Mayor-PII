@@ -31,6 +31,10 @@ return new class extends Migration
             // Especialidad para Rol Legal
             $table->enum('area_especialidad_legal', ['Asistente Social', 'Psicologia', 'Derecho'])->nullable();
             
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
+           
             $table->timestamps();
             
             // Índices para mejorar rendimiento

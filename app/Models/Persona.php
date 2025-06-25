@@ -7,11 +7,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+// --- 1. AÑADIR LA IMPORTACIÓN DE SOFTDELETES ---
+use Illuminate\Database\Eloquent\SoftDeletes;
+// --------Eliminacion con logica------------------
 use Carbon\Carbon;
 
 class Persona extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; //<-- 2. AÑADIR SOFTDELETES AQUÍ -->
 
     protected $table = 'persona'; // Nombre de la tabla
     protected $primaryKey = 'ci'; // Clave primaria

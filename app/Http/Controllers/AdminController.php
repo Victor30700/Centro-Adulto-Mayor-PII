@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator; // Usar Validator para más control
 use Carbon\Carbon; // Para calcular la edad
+use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
@@ -99,134 +100,7 @@ class AdminController extends Controller
         // return view('Admin.registerUsers.registerResponsable.registerRes', compact('roles'));
         return view('Admin.registerUsers.registerResponsable.registerRes');
     }
-/*
-public function storeAsistenteSocial(Request $request)
-{
-    // Logging para depuración
-    Log::info('Iniciando registro de asistente social', ['data' => $request->all()]);
 
-    $validator = Validator::make($request->all(), [
-        // Pestaña 1: Datos Personales (tabla 'persona')
-        'nombres' => 'required|string|max:255',
-        'primer_apellido' => 'required|string|max:255',
-        'segundo_apellido' => 'nullable|string|max:255',
-        'ci' => 'required|string|max:20|unique:persona,ci|regex:/^\d+$/', // Solo números
-        'fecha_nacimiento' => 'required|date|before_or_equal:today',
-        'sexo' => 'required|string|in:F,M,O',
-        'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
-        'domicilio' => 'required|string|max:255',
-        'telefono' => 'required|string|max:20',
-        'zona_comunidad' => 'nullable|string|max:100',
-        //'area_especialidad' => 'nullable|string|max:255',
-
-        // Pestaña 2: Datos de Usuario (tabla 'users')
-        'id_rol' => 'required|integer|exists:rol,id_rol',
-        'password' => 'required|string|min:8|confirmed',
-        'terms_acceptance' => 'required|accepted',
-    ], [
-        // Mensajes personalizados
-        'nombres.required' => 'El campo nombres es obligatorio.',
-        'primer_apellido.required' => 'El campo primer apellido es obligatorio.',
-        'ci.required' => 'El campo CI es obligatorio.',
-        'ci.unique' => 'Este CI ya ha sido registrado.',
-        'ci.regex' => 'El CI debe contener solo números.',
-        'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
-        'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
-        'sexo.required' => 'El campo sexo es obligatorio.',
-        'sexo.in' => 'El sexo debe ser Femenino, Masculino u Otro.',
-        'estado_civil.required' => 'El estado civil es obligatorio.',
-        'estado_civil.in' => 'El estado civil debe ser uno de los valores válidos.',
-        'domicilio.required' => 'El domicilio es obligatorio.',
-        'telefono.required' => 'El teléfono es obligatorio.',
-        'id_rol.required' => 'El rol es obligatorio.',
-        'id_rol.exists' => 'El rol seleccionado no es válido.',
-        'password.required' => 'La contraseña es obligatoria.',
-        'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-        'password.confirmed' => 'La confirmación de contraseña no coincide.',
-        'terms_acceptance.required' => 'Debe aceptar los términos y condiciones.',
-        'terms_acceptance.accepted' => 'Debe aceptar los términos y condiciones.',
-    ]);
-
-    if ($validator->fails()) {
-        Log::warning('Validación falló para registro de asistente social', ['errors' => $validator->errors()]);
-        return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
-    }
-
-    DB::beginTransaction();
-
-    try {
-        // Calcular edad
-        $edad = Carbon::parse($request->fecha_nacimiento)->age;
-
-        // 1. Crear Persona
-        $personaData = [
-            'ci' => $request->ci,
-            'primer_apellido' => $request->primer_apellido,
-            'segundo_apellido' => $request->segundo_apellido,
-            'nombres' => $request->nombres,
-            'sexo' => $request->sexo,
-            'fecha_nacimiento' => $request->fecha_nacimiento,
-            'edad' => $edad,
-            'estado_civil' => $request->estado_civil,
-            'domicilio' => $request->domicilio,
-            'telefono' => $request->telefono,
-            'zona_comunidad' => $request->zona_comunidad,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        $persona = Persona::create($personaData);
-
-        if (!$persona) {
-            throw new \Exception('No se pudo crear el registro de persona');
-        }
-
-        // 2. Crear Usuario Asistente Social
-        $userData = [
-            'ci' => $request->ci,
-            'id_rol' => $request->id_rol, // 4 para asistente social
-            'name' => $request->nombres . ' ' . $request->primer_apellido,
-            'password' => Hash::make($request->password),
-            'active' => true,
-            'login_attempts' => 0,
-        ];
-
-        $user = User::create($userData);
-
-        if (!$user) {
-            throw new \Exception('No se pudo crear el registro de usuario');
-        }
-
-        // 3. (Opcional) Registrar área de especialidad si se proporciona
-        if ($request->filled('area_especialidad')) {
-            Log::info('Área de especialidad registrada para asistente social', [
-                'ci' => $request->ci,
-                'area_especialidad' => $request->area_especialidad
-            ]);
-            // Aquí puedes guardar en otra tabla específica si la tienes
-        }
-
-        DB::commit();
-
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Asistente Social registrado exitosamente.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Error registrando asistente social: ' . $e->getMessage(), [
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-            'request_data' => $request->all()
-        ]);
-        return redirect()->back()
-            ->withErrors(['error_registro' => 'Ocurrió un error interno al registrar el asistente social: ' . $e->getMessage()])
-            ->withInput();
-    }
-}
-*/
     public function storeUsuarioLegal(Request $request)
     {
         Log::info('Iniciando registro de usuario legal', ['data' => $request->all()]);
@@ -297,36 +171,37 @@ public function storeAsistenteSocial(Request $request)
         }
     }
     
-public function storeAdultoMayor(Request $request)
+/**
+ * --- FUNCIÓN MODIFICADA ---
+ * Almacena un nuevo Adulto Mayor o detecta si ya existe uno borrado para ofrecer restauración.
+ */
+    public function storeAdultoMayor(Request $request)
     {
-        // Agregar logging para depuración
         Log::info('Iniciando registro de adulto mayor', ['data' => $request->all()]);
 
+        // Mantenemos tu validador, pero quitamos 'unique' de la regla 'ci'
         $validator = Validator::make($request->all(), [
-            // Pestaña 1: Datos Personales (tabla 'persona')
             'nombres' => 'required|string|max:255',
             'primer_apellido' => 'required|string|max:255',
             'segundo_apellido' => 'nullable|string|max:255',
-            'ci' => 'required|string|max:20|unique:persona,ci',
+            'ci' => 'required|string|max:20', // Regla 'unique' eliminada de aquí
             'fecha_nacimiento' => 'required|date|before_or_equal:today',
             'sexo' => 'required|string|in:F,M,O',
             'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
             'domicilio' => 'required|string|max:255',
             'telefono' => 'required|string|max:20',
             'zona_comunidad' => 'nullable|string|max:100',
-
-            // Pestaña 2: Datos específicos de adulto mayor (tabla 'adulto_mayor')
             'discapacidad' => 'nullable|string',
             'vive_con' => 'nullable|string|max:200',
             'migrante' => 'nullable|in:0,1',
             'nro_caso' => 'nullable|string|max:50|unique:adulto_mayor,nro_caso',
             'fecha' => 'required|date',
         ], [
-            // Mensajes personalizados
+            // Se conservan todos tus mensajes personalizados
             'nombres.required' => 'El campo nombres es obligatorio.',
             'primer_apellido.required' => 'El campo primer apellido es obligatorio.',
             'ci.required' => 'El campo CI es obligatorio.',
-            'ci.unique' => 'Este CI ya ha sido registrado.',
+            'ci.unique' => 'Este CI ya ha sido registrado.', // Este mensaje ahora se mostrará manualmente
             'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
             'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
             'sexo.required' => 'El campo sexo es obligatorio.',
@@ -341,23 +216,31 @@ public function storeAdultoMayor(Request $request)
         ]);
 
         if ($validator->fails()) {
-            Log::warning('Validación falló para registro de adulto mayor', ['errors' => $validator->errors()]);
-            return redirect()->back()
-                            ->withErrors($validator)
-                            ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        DB::beginTransaction();
+        // --- NUEVA LÓGICA DE DETECCIÓN INTELIGENTE ---
+        $personaExistente = Persona::withTrashed()->where('ci', $request->ci)->first();
 
+        if ($personaExistente) {
+            if ($personaExistente->trashed()) {
+                // El CI existe en la papelera, damos la opción de restaurar.
+                $errorMessage = "El CI '{$request->ci}' ya existe pero fue eliminado. Puede restaurarlo y actualizar sus datos con la información de este formulario.";
+                return redirect()->back()
+                                 ->with('restore_error', $errorMessage)
+                                 ->with('trashed_persona', $personaExistente->load('adultoMayor'))
+                                 ->withInput();
+            } else {
+                // El CI existe y está activo, devolvemos el error 'unique' manualmente.
+                return redirect()->back()->withErrors(['ci' => 'Este CI ya está registrado y activo en el sistema.'])->withInput();
+            }
+        }
+
+        // --- LÓGICA DE CREACIÓN ORIGINAL (si el CI es nuevo) ---
+        DB::beginTransaction();
         try {
-            // Calcular edad
             $edad = Carbon::parse($request->fecha_nacimiento)->age;
             
-            Log::info('Calculando edad', ['fecha_nacimiento' => $request->fecha_nacimiento, 'edad' => $edad]);
-
-            // 1. Crear Persona
-            // Si estás usando modelos Eloquent y tienen $fillable configurado, puedes usar create.
-            // Si no, el Query Builder como lo tenías está bien, pero Persona::create es más idiomático de Eloquent.
             $persona = Persona::create([
                 'ci' => $request->ci,
                 'primer_apellido' => $request->primer_apellido,
@@ -370,57 +253,87 @@ public function storeAdultoMayor(Request $request)
                 'domicilio' => $request->domicilio,
                 'telefono' => $request->telefono,
                 'zona_comunidad' => $request->zona_comunidad,
-                // 'created_at' y 'updated_at' usualmente son manejados por Eloquent automáticamente
             ]);
 
-            Log::info('Persona creada exitosamente', ['persona_id' => $persona->id, 'ci' => $persona->ci]);
-
-            // 2. Preparar datos para adulto_mayor
-            $adultoMayorData = [
-                'ci' => $request->ci, // Clave foránea hacia persona
-                'discapacidad' => $request->discapacidad,
-                'vive_con' => $request->vive_con,
-                'migrante' => $request->migrante == '1' ? true : false, // Conversión explícita
-                'fecha' => $request->fecha,
-                // 'created_at' y 'updated_at' usualmente son manejados por Eloquent automáticamente
-            ];
-
-            // Solo agregar nro_caso si se proporcionó y no está vacío
-            if ($request->filled('nro_caso')) {
-                $adultoMayorData['nro_caso'] = $request->nro_caso;
-            }
-
-            // Si usas Eloquent para AdultoMayor y tiene una relación definida con Persona,
-            // podrías hacer algo como $persona->adultoMayor()->create($adultoMayorData);
-            // o si 'ci' es la clave primaria/única en adulto_mayor y también la FK:
-            $adultoMayor = AdultoMayor::create($adultoMayorData);
-
-
-            Log::info('Adulto mayor creado exitosamente', ['adulto_mayor_id' => $adultoMayor->id_adulto ?? $adultoMayor->id]); // Ajusta según tu PK
+            $adultoMayorData = $request->only(['discapacidad', 'vive_con', 'nro_caso', 'fecha']);
+            $adultoMayorData['ci'] = $persona->ci;
+            $adultoMayorData['migrante'] = $request->migrante == '1' ? true : false;
+            AdultoMayor::create($adultoMayorData);
 
             DB::commit();
 
-            Log::info('Transacción completada exitosamente');
-
-            return redirect()->route('gestionar-adultomayor.index') // <--- ESTA ES LA LÍNEA CORRECTA
-                 ->with('success', 'Adulto Mayor registrado exitosamente.');
-
+            return redirect()->route('gestionar-adultomayor.index')
+                             ->with('success', 'Adulto Mayor registrado exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Error registrando adulto mayor: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                // 'trace' => $e->getTraceAsString(), // Puede ser muy verboso para logs regulares
-                'request_data' => $request->all()
-            ]);
-            
+            Log::error('Error registrando adulto mayor: ' . $e->getMessage());
             return redirect()->back()
-                            ->withErrors(['error_registro' => 'Ocurrió un error interno al registrar al adulto mayor. Por favor, intente de nuevo. Detalles: ' . $e->getMessage()])
-                            ->withInput();
+                             ->withErrors(['error_registro' => 'Ocurrió un error interno al registrar.'])
+                             ->withInput();
         }
     }
 
+    /**
+     * --- FUNCIÓN NUEVA ---
+     * Pega esta función justo debajo de la función storeAdultoMayor.
+     */
+    public function restoreAndupdateAdultoMayor(Request $request, $ci)
+    {
+        Log::info('Iniciando restauración de adulto mayor', ['ci' => $ci]);
+
+        // Se usa la misma validación y mensajes que en la función store
+        $validator = Validator::make($request->all(), [
+            'nombres' => 'required|string|max:255',
+            'primer_apellido' => 'required|string|max:255',
+            'segundo_apellido' => 'nullable|string|max:255',
+            'ci' => 'required|string|max:20',
+            'fecha_nacimiento' => 'required|date|before_or_equal:today',
+            'sexo' => 'required|string|in:F,M,O',
+            'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
+            'domicilio' => 'required|string|max:255',
+            'telefono' => 'required|string|max:20',
+            'zona_comunidad' => 'nullable|string|max:100',
+            'discapacidad' => 'nullable|string',
+            'vive_con' => 'nullable|string|max:200',
+            'migrante' => 'nullable|in:0,1',
+            // La regla 'unique' para nro_caso ignora el registro que estamos restaurando.
+            'nro_caso' => ['nullable', 'string', 'max:50', Rule::unique('adulto_mayor', 'nro_caso')->ignore($ci, 'ci')],
+            'fecha' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            $persona = Persona::withTrashed()->where('ci', $ci)->firstOrFail();
+            $adultoMayor = $persona->adultoMayor()->withTrashed()->firstOrFail();
+
+            $persona->restore();
+            $adultoMayor->restore();
+            
+            $edad = Carbon::parse($request->fecha_nacimiento)->age;
+            
+            $personaData = $request->only(['ci', 'nombres', 'primer_apellido', 'segundo_apellido', 'sexo', 'fecha_nacimiento', 'estado_civil', 'domicilio', 'telefono', 'zona_comunidad']);
+            $personaData['edad'] = $edad;
+            $persona->update($personaData);
+            
+            $adultoMayorData = $request->only(['discapacidad', 'vive_con', 'nro_caso', 'fecha']);
+            $adultoMayorData['migrante'] = $request->migrante == '1' ? true : false;
+            $adultoMayor->update($adultoMayorData);
+            
+            DB::commit();
+            
+            return redirect()->route('gestionar-adultomayor.index')
+                             ->with('success', "El registro de CI {$ci} ha sido restaurado y actualizado.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error restaurando adulto mayor con CI {$ci}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al intentar restaurar.')->withInput();
+        }
+    }
     /**
     * Mostrar listado de adultos mayores
     */
@@ -675,53 +588,42 @@ public function storeAdultoMayor(Request $request)
         }
     }
     /**
-    * Eliminar adulto mayor
-    */
+     * Eliminar adulto mayor
+     */
     public function eliminarAdultoMayor($ci)
     {
         DB::beginTransaction();
 
         try {
-            // Verificar si existe la persona y el adulto mayor asociado
-            $persona = DB::table('persona')->where('ci', $ci)->first();
-            
+            // CORRECCIÓN 1: Se busca usando el Modelo para que SoftDeletes funcione.
+            // firstOrFail() se encarga de verificar si existe. Si no, falla de forma segura.
+            $adultoMayor = AdultoMayor::where('ci', $ci)->firstOrFail();
+            $persona = $adultoMayor->persona;
+
+            // Si la persona no existiera por alguna inconsistencia de datos, falla.
             if (!$persona) {
-                 DB::rollBack(); // No es necesario si no se ha hecho ninguna operación aún, pero por consistencia.
-                return redirect()->route('admin.gestionar-adultomayor.index')
-                                ->with('error', 'Persona no encontrada.');
+                throw new \Exception("Datos inconsistentes: No se encontró la persona asociada al CI {$ci}.");
             }
 
-            $existeAdultoMayor = DB::table('adulto_mayor')->where('ci', $ci)->exists();
-            if (!$existeAdultoMayor) {
-                DB::rollBack();
-                 // Si la persona existe pero no el adulto mayor, podría ser un estado inconsistente.
-                 // O quizás solo se quiere eliminar la persona si no hay adulto mayor.
-                 // Por ahora, asumimos que si se intenta eliminar "adulto mayor", ambos deben existir.
-                Log::warning('Intento de eliminar adulto mayor no encontrado, pero persona sí existe.', ['ci' => $ci]);
-                // Decidir si eliminar solo persona o devolver error. Aquí devuelvo error.
-                return redirect()->route('admin.gestionar-adultomayor.index')
-                                ->with('error', 'Registro de Adulto Mayor asociado a la persona no encontrado.');
-            }
-
-
-            // Eliminar adulto mayor primero (por la relación de clave foránea si persona.ci es referenciada)
-            // O si la FK es de adulto_mayor.ci a persona.ci, el orden es correcto.
-            DB::table('adulto_mayor')->where('ci', $ci)->delete();
-            
-            // Eliminar persona
-            DB::table('persona')->where('ci', $ci)->delete();
+            // CORRECCIÓN 2: Se usa el método delete() de los modelos para el borrado lógico.
+            $adultoMayor->delete();
+            $persona->delete();
 
             DB::commit();
 
-            return redirect()->route('admin.gestionar-adultomayor.index')
-                            ->with('success', 'Adulto mayor y datos personales asociados eliminados exitosamente.');
+            Log::info("Adulto mayor con CI {$ci} ha sido eliminado (lógicamente).");
+
+            // CORRECCIÓN 3: Se usa el nombre de ruta EXACTO Y CONFIRMADO del archivo web.php
+            return redirect()->route('gestionar-adultomayor.index')
+                             ->with('success', 'Adulto mayor y datos personales asociados eliminados exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error eliminando adulto mayor: ' . $e->getMessage());
             
-            return redirect()->route('admin.gestionar-adultomayor.index')
-                            ->with('error', 'Error al eliminar el adulto mayor. Detalles: ' . $e->getMessage());
+            // También se corrige el nombre de la ruta aquí.
+            return redirect()->route('gestionar-adultomayor.index')
+                             ->with('error', 'Error al eliminar el adulto mayor. ' . $e->getMessage());
         }
     }
     

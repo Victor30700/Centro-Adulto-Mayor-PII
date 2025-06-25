@@ -21,6 +21,9 @@ return new class extends Migration
             $table->date('fecha');
             $table->timestamps();
             
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
             // Clave foránea
             $table->foreign('ci')->references('ci')->on('persona')->onDelete('cascade');
             

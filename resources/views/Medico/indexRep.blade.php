@@ -1,30 +1,17 @@
 @extends('layouts.main')
 
+{{-- Define el título de la página --}}
+@section('title', 'Módulo Médico / Reportes de Atención de Enfermería')
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo Médico / Reportes de Atención de Enfermería</title>
-    
-    {{-- Carga de jQuery (si es necesario para algún otro script en dashboard.css o generales) --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    {{-- Tus CSS personalizados --}}
+{{-- Estilos específicos de la vista --}}
+@push('styles')
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/Medico/indexHistoriaClinica.css') }}"> 
-    
-    {{-- Feather Icons --}}
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-
-    {{-- IMPORTANTE: NO DataTables CSS/JS aquí --}}
-</head>
-
+    {{-- SweetAlert2 CSS --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+@endpush
 
 @section('content')
-
-<body>
 
                     <div class="page-header">
                         <h1 class="page-title">Módulo Médico / Reportes de Atención de Enfermería</h1>
@@ -35,18 +22,6 @@
                             </ol>
                         </div>
                     </div>
-
-                    <!-- Mensajes de éxito o error -->
-                    @if(session('success'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    @if(session('error'))
-                        <div class="alert alert-danger" role="alert">
-                            {{ session('error') }}
-                        </div>
-                    @endif
 
                     <!-- Tarjetas de estadísticas -->
                     <div class="row">
@@ -89,14 +64,15 @@
 
                     <!-- Botones para Navegación entre Reportes -->
                     <div class="mb-3 d-flex justify-content-start gap-2">
+                        {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.index --}}
                         <a href="{{ route('responsable.enfermeria.reportes_enfermeria.index') }}" class="btn btn-primary">
                             <i class="fe fe-heart"></i> Reportes de Atención de Enfermería
                         </a>
+                        {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_historia_clinica.index --}}
                         <a href="{{ route('responsable.enfermeria.reportes_historia_clinica.index') }}" class="btn btn-secondary">
                             <i class="fe fe-file-text"></i> Reportes de Historia Clínica
                         </a>
                     </div>
-
 
                     <!-- Tabla de reportes de Atención de Enfermería -->
                     <div class="row mt-4">
@@ -107,6 +83,7 @@
                                 </div>
                                 <div class="card-body">
                                     {{-- Formulario de Filtros y Búsqueda (gestionado por Laravel) --}}
+                                    {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.index --}}
                                     <form id="filterForm" action="{{ route('responsable.enfermeria.reportes_enfermeria.index') }}" method="GET" class="form-filter mb-4">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-4">
@@ -122,6 +99,7 @@
                                                 <div class="input-group">
                                                     <input type="text" class="form-control" id="search" name="search" placeholder="Buscar por CI, nombres, PA, Temp, Derivación..." value="{{ $search ?? '' }}">
                                                     <button type="submit" class="btn btn-primary"><i class="fe fe-search"></i> Buscar</button>
+                                                    {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.index --}}
                                                     <a href="{{ route('responsable.enfermeria.reportes_enfermeria.index') }}" class="btn btn-outline-secondary"><i class="fe fe-x"></i> Restablecer</a>
                                                 </div>
                                                 <small class="text-muted">Búsqueda por CI, nombres, presión arterial, temperatura, o derivación.</small>
@@ -131,6 +109,7 @@
 
                                     {{-- Botones para Imprimir y Exportar Excel --}}
                                     <div class="mb-3 d-flex justify-content-end gap-2">
+                                        {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.exportar_excel --}}
                                         <button type="button" class="btn btn-success btn-sm" id="exportarExcelBtn">
                                             <i class="fe fe-download"></i> Exportar a Excel
                                         </button>
@@ -169,11 +148,12 @@
                                                         <td>{{ optional($reporte->usuario->persona)->nombres }} {{ optional($reporte->usuario->persona)->primer_apellido }}</td>
                                                         <td>
                                                             <div class="btn-group" role="group">
+                                                                {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.show_atencion_enfermeria --}}
                                                                 <a href="{{ route('responsable.enfermeria.reportes_enfermeria.show_atencion_enfermeria', ['cod_enf' => $reporte->cod_enf]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Ver Detalles">
                                                                     <i class="fe fe-eye"></i>
                                                                 </a>
-                                                                {{-- Usar un modal de confirmación personalizado para eliminar --}}
-                                                                <form action="{{ route('responsable.enfermeria.reportes_enfermeria.destroy_atencion_enfermeria', ['cod_enf' => $reporte->cod_enf]) }}" method="POST" onsubmit="showCustomConfirm(event, '¿Está seguro de que desea eliminar esta atención de enfermería?', this);">
+                                                                {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.destroy_atencion_enfermeria --}}
+                                                                <form action="{{ route('responsable.enfermeria.reportes_enfermeria.destroy_atencion_enfermeria', ['cod_enf' => $reporte->cod_enf]) }}" method="POST" style="display:inline-block;" class="form-delete-report">
                                                                     @csrf
                                                                     @method('DELETE')
                                                                     <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Eliminar">
@@ -207,102 +187,85 @@
                         </div>
                     </div>
 
-   
-
 @endsection
 
-{{-- Carga de scripts al final del body --}}
-
-{{-- MODAL DE CONFIRMACIÓN PERSONALIZADO (Añadir al final del body si no está ya en el footer o un layout principal) --}}
-<div class="modal fade" id="customConfirmModalOverlay" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="customConfirmModalLabel">Confirmación de Eliminación</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p id="customConfirmMessage">¿Está seguro de que desea realizar esta acción?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="customConfirmBtn">Confirmar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
+{{-- Scripts específicos de la vista --}}
 @push('scripts')
-<script>
-// Función para mostrar el modal de confirmación personalizado
-let currentConfirmForm = null; 
+    {{-- Carga de jQuery (si es necesario para algún otro script en dashboard.css o generales, o DataTables) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {{-- Feather Icons --}}
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    {{-- SweetAlert2 JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-function showCustomConfirm(event, message, form) {
-    event.preventDefault(); 
-    currentConfirmForm = form; 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inicializar Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
 
-    const overlay = document.getElementById('customConfirmModalOverlay');
-    const msgElement = document.getElementById('customConfirmMessage');
-    const confirmBtn = document.getElementById('customConfirmBtn');
+            // Inicializar Tooltips de Bootstrap (asumiendo que Bootstrap JS está en layouts.main)
+            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip !== 'undefined') {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+            }
 
-    msgElement.textContent = message; 
-    
-    confirmBtn.onclick = null; 
-    confirmBtn.onclick = function() {
-        if (currentConfirmForm) {
-            currentConfirmForm.submit(); 
-            hideCustomConfirm(); 
-        }
-    };
+            // Manejo de SweetAlert2 para mensajes de sesión (éxito/error)
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: '{{ session('success') }}',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            @endif
 
-    var customConfirmModal = new bootstrap.Modal(overlay);
-    customConfirmModal.show();
-    return false; 
-}
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: '¡Error!',
+                    text: '{{ session('error') }}',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Cerrar'
+                });
+            @endif
 
-function hideCustomConfirm() {
-    const overlay = document.getElementById('customConfirmModalOverlay');
-    var customConfirmModal = bootstrap.Modal.getInstance(overlay);
-    if (customConfirmModal) {
-        customConfirmModal.hide(); 
-    }
-    currentConfirmForm = null; 
-}
+            // Lógica para el botón de exportar a Excel
+            document.getElementById('exportarExcelBtn').addEventListener('click', function() {
+                const form = document.getElementById('filterForm');
+                const formData = new FormData(form);
+                const queryString = new URLSearchParams(formData).toString();
+                // Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.exportar_excel
+                window.location.href = {{ route('responsable.enfermeria.reportes_enfermeria.exportar_excel') }}?${queryString};
+            });
 
+            // Manejo de SweetAlert2 para confirmaciones de eliminación
+            document.querySelectorAll('.form-delete-report').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault(); // Detener el envío del formulario
+                    const form = this; // Referencia al formulario actual
 
-document.addEventListener('DOMContentLoaded', function () {
-    if (typeof feather !== 'undefined') {
-        feather.replace();
-    }
+                    Swal.fire({
+                        title: '¿Está seguro?',
+                        text: "¿Desea eliminar esta atención de enfermería? ¡Esta acción no se puede deshacer!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit(); // Si el usuario confirma, enviar el formulario
+                        }
+                    });
+                });
+            });
 
-    // Lógica para el botón de imprimir registros
-    document.getElementById('imprimirRegistrosBtn').addEventListener('click', function() {
-        const form = document.getElementById('filterForm');
-        const formData = new FormData(form);
-        const queryString = new URLSearchParams(formData).toString();
-        // Redirige a la nueva ruta de impresión con los mismos parámetros de filtro
-        window.open(`{{ route('responsable.enfermeria.reportes_enfermeria.imprimir') }}?${queryString}`, '_blank');
-    });
-
-    // Lógica para el botón de exportar a Excel
-    document.getElementById('exportarExcelBtn').addEventListener('click', function() {
-        const form = document.getElementById('filterForm');
-        const formData = new FormData(form);
-        const queryString = new URLSearchParams(formData).toString();
-        // Redirige a la nueva ruta de exportación de Excel con los mismos parámetros de filtro
-        window.location.href = `{{ route('responsable.enfermeria.reportes_enfermeria.exportar_excel') }}?${queryString}`;
-    });
-
-    // Inicializar tooltips de Bootstrap
-    if (typeof bootstrap !== 'undefined' && typeof bootstrap.Tooltip !== 'undefined') {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
-    }
-});
-</script>
+        });
+    </script>
 @endpush
-
-</body>
-</html>

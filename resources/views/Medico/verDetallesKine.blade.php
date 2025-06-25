@@ -67,9 +67,20 @@
                                                         <span class="detail-label">Sexo:</span>
                                                         <span class="detail-value">{{ optional($kinesiologia->adulto->persona)->sexo == 'F' ? 'Femenino' : (optional($kinesiologia->adulto->persona)->sexo == 'M' ? 'Masculino' : 'N/A') }}</span>
                                                     </div>
+                                                    {{-- Usando lugar_nacimiento_provincia y lugar_nacimiento_departamento de HistoriaClinica --}}
                                                     <div class="detail-row">
-                                                        <span class="detail-label">Lugar de Nacimiento:</span>
-                                                        <span class="detail-value">{{ optional($kinesiologia->historiaClinica)->lugar_nacimiento ?? 'N/A' }}</span>
+                                                        <span class="detail-label">Lugar de Nacimiento (Hist. Clínica):</span>
+                                                        <span class="detail-value">
+                                                            @if(optional($kinesiologia->historiaClinica)->lugar_nacimiento_provincia || optional($kinesiologia->historiaClinica)->lugar_nacimiento_departamento)
+                                                                {{ optional($kinesiologia->historiaClinica)->lugar_nacimiento_provincia ?? '' }}
+                                                                @if(optional($kinesiologia->historiaClinica)->lugar_nacimiento_provincia && optional($kinesiologia->historiaClinica)->lugar_nacimiento_departamento)
+                                                                    , 
+                                                                @endif
+                                                                {{ optional($kinesiologia->historiaClinica)->lugar_nacimiento_departamento ?? '' }}
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </span>
                                                     </div>
                                                     <div class="detail-row">
                                                         <span class="detail-label">Barrio:</span>

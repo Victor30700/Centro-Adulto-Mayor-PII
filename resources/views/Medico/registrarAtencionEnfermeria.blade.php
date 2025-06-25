@@ -1,6 +1,5 @@
 @extends('layouts.main')
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,20 +12,17 @@
             Registrar Atención de Enfermería
         @endif
     </title>
-    {{-- Incluye tus CSS aquí --}}
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
-    {{-- CSS específico para este formulario --}}
     <link rel="stylesheet" href="{{ asset('css/Medico/registrarAtencionEnfermeria.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-
 
 @section('content')
 <body>
-
-<div class="container1">
     <div class="navigation-buttons">
-        <a href="{{ route('responsable.enfermeria.enfermeria.index') }}" class="btn btn-secondary">← Volver al listado</a>
+        <a href="{{ route('responsable.enfermeria.enfermeria.index') }}" class="btn btn-secondary">Volver al listado</a>
     </div>
 
     <h6 style="color: white;">
@@ -41,29 +37,30 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     @if($errors->any())
-        <div class="general-error-container1">
-            <h6>Se encontraron los siguientes errores:</h6>
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errores en el formulario',
+                    html: '<ul style="text-align: left;">' + @json($errors->all()).map(error => <li>${error}</li>).join('') + '</ul>',
+                    confirmButtonText: 'Corregir'
+                });
+            });
+        </script>
     @endif
 
     <div class="form-section">
-        <form action="{{ $modoEdicion ? route('responsable.enfermeria.enfermeria.update', ['cod_enf' => optional($fichaEnfermeria)->cod_enf]) : route('responsable.enfermeria.enfermeria.store', ['id_adulto' => $adulto->id_adulto]) }}" method="POST">
+        <form id="atencion-enfermeria-form" action="{{ $modoEdicion ? route('responsable.enfermeria.enfermeria.update', ['cod_enf' => optional($fichaEnfermeria)->cod_enf]) : route('responsable.enfermeria.enfermeria.store', ['id_adulto' => $adulto->id_adulto]) }}" method="POST">
             @csrf
             @if($modoEdicion)
                 @method('PUT')
             @endif
 
-            {{-- Campo oculto para pasar el id_adulto --}}
             <input type="hidden" name="id_adulto" value="{{ $adulto->id_adulto }}">
 
             <h5 class="mt-4">DATOS DE IDENTIFICACIÓN DEL ADULTO MAYOR:</h5>
             <div class="row">
-                <div class="col-md-6"> {{-- Se cambió a col-md-6 para dejar espacio para Sexo y Edad --}}
+                <div class="col-md-6">
                     <div class="form-group">
                         <label for="nombre_completo_am">NOMBRE COMPLETO:</label>
                         <div class="read-only-field">
@@ -73,13 +70,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3"> {{-- Nueva columna para Sexo --}}
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="sexo_am">SEXO:</label>
                         <div class="read-only-field">{{ optional($adulto->persona)->sexo ?? 'N/A' }}</div>
                     </div>
                 </div>
-                <div class="col-md-3"> {{-- Nueva columna para Edad --}}
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="edad_am">EDAD:</label>
                         <div class="read-only-field">{{ optional($adulto->persona)->edad ?? 'N/A' }}</div>
@@ -190,7 +187,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="adm_medicamentos">responsable.enfermeriaISTRACIÓN MEDICAMENTOS:</label>
+                        <label for="adm_medicamentos">ADMINISTRACIÓN MEDICAMENTOS:</label>
                         <textarea id="adm_medicamentos" name="adm_medicamentos" rows="3" class="form-control">{{ old('adm_medicamentos', optional($fichaEnfermeria)->adm_medicamentos) }}</textarea>
                         @error('adm_medicamentos')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
@@ -209,20 +206,84 @@
             </div>
         </form>
     </div>
-</div>
+</body>
+@endsection
 
 @push('scripts')
-{{-- Incluye tus scripts aquí --}}
-{{-- Script para los iconos Feather Icons --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar Feather Icons
         if (typeof feather !== 'undefined') {
             feather.replace();
+        }
+
+        // Validaciones con SweetAlert2
+        const form = document.getElementById('atencion-enfermeria-form');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                let errors = [];
+
+                // Validar Signos Vitales (todos obligatorios)
+                const signosVitales = [
+                    { id: 'presion_arterial', label: 'Presión Arterial', regex: /^\d{1,3}\/\d{1,3}$/, example: '120/80' },
+                    { id: 'frecuencia_cardiaca', label: 'Frecuencia Cardíaca', isNumber: true },
+                    { id: 'frecuencia_respiratoria', label: 'Frecuencia Respiratoria', isNumber: true },
+                    { id: 'pulso', label: 'Pulso', isNumber: true },
+                    { id: 'temperatura', label: 'Temperatura', regex: /^\d{1,2}(\.\d{1,2})?$/, example: '36.5' },
+                    { id: 'control_oximetria', label: 'Control Oximetría', isNumber: true }
+                ];
+                signosVitales.forEach(field => {
+                    const input = document.getElementById(field.id);
+                    if (!input.value.trim()) {
+                        errors.push(El campo "${field.label}" es obligatorio.);
+                    } else if (field.regex && !field.regex.test(input.value.trim())) {
+                        errors.push(El campo "${field.label}" debe tener el formato correcto (ejemplo: ${field.example}).);
+                    } else if (field.isNumber) {
+                        const value = parseFloat(input.value.trim());
+                        if (isNaN(value) || value < 0) {
+                            errors.push(El campo "${field.label}" debe ser un número positivo.);
+                        }
+                    }
+                });
+
+                // Validar Atenciones de Enfermería (todos obligatorios)
+                const atenciones = [
+                    { id: 'inyectables', label: 'Inyectables' },
+                    { id: 'orientacion_alimentacion', label: 'Orientación Alimentación' },
+                    { id: 'lavado_oidos', label: 'Lavado de Oídos' },
+                    { id: 'orientacion_tratamiento', label: 'Orientación Tratamiento' },
+                    { id: 'curacion', label: 'Curación' },
+                    { id: 'adm_medicamentos', label: 'Administración Medicamentos' },
+                    { id: 'derivacion', label: 'Derivación' }
+                ];
+                atenciones.forEach(field => {
+                    const input = document.getElementById(field.id);
+                    if (!input.value.trim()) {
+                        errors.push(El campo "${field.label}" es obligatorio.);
+                    } else if (input.value.length > 1000) {
+                        errors.push(El campo "${field.label}" no debe exceder los 1000 caracteres.);
+                    }
+                });
+
+                const pesoTalla = document.getElementById('peso_talla');
+                if (!pesoTalla.value.trim()) {
+                    errors.push('El campo "Peso y Talla" es obligatorio.');
+                } else if (!/^\d{1,3}\/\d{1,3}$/.test(pesoTalla.value.trim())) {
+                    errors.push('El campo "Peso y Talla" debe tener el formato correcto (ejemplo: 70/165).');
+                }
+
+                // Mostrar errores con SweetAlert2
+                if (errors.length > 0) {
+                    event.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Errores en el formulario',
+                        html: '<ul style="text-align: left;">' + errors.map(error => <li>${error}</li>).join('') + '</ul>',
+                        confirmButtonText: 'Corregir'
+                    });
+                }
+            });
         }
     });
 </script>
 @endpush
-
-</body>
-</html>
-@endsection

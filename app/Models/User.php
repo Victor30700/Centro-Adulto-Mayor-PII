@@ -5,11 +5,14 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+// --- 1. AÑADIR LA IMPORTACIÓN DE SOFTDELETES ---
+use Illuminate\Database\Eloquent\SoftDeletes;
+// --------Eliminacion con logica------------------
 use Carbon\Carbon;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes; //<-- 2. AÑADIR SOFTDELETES AQUÍ -->
 
     protected $table = 'usuario';
     protected $primaryKey = 'id_usuario';

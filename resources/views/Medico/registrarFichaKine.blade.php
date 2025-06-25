@@ -28,7 +28,7 @@
                         </a>
                     </div>
                     {{-- Título principal del formulario --}}
-                    <h6>
+                    <h6 style="color: white;">
                         @if(isset($kinesiologia) && $kinesiologia->exists)
                             EDITAR FICHA DE KINESIOLOGÍA PARA: <strong>{{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</strong>
                         @else
@@ -87,11 +87,20 @@
                                         <div class="read-only-field">{{ optional($adulto->persona)->sexo ?? 'N/A' }}</div>
                                     </div>
                                 </div>
+                                {{-- Usando lugar_nacimiento_provincia y lugar_nacimiento_departamento de HistoriaClinica --}}
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="lugar_nacimiento_am">LUGAR DE NACIMIENTO:</label>
+                                        <label for="lugar_nacimiento_hc">LUGAR DE NACIMIENTO (HIST. CLÍNICA):</label>
                                         <div class="read-only-field">
-                                            {{ optional($historiaClinica)->lugar_nacimiento ?? 'N/A' }}
+                                            @if(optional($historiaClinica)->lugar_nacimiento_provincia || optional($historiaClinica)->lugar_nacimiento_departamento)
+                                                {{ optional($historiaClinica)->lugar_nacimiento_provincia ?? '' }}
+                                                @if(optional($historiaClinica)->lugar_nacimiento_provincia && optional($historiaClinica)->lugar_nacimiento_departamento)
+                                                    , 
+                                                @endif
+                                                {{ optional($historiaClinica)->lugar_nacimiento_departamento ?? '' }}
+                                            @else
+                                                N/A
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -183,4 +192,3 @@
     });
 </script>
 @endpush
-

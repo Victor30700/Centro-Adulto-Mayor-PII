@@ -31,7 +31,7 @@
                                 </a>
                             </div>
                     {{-- Título principal del formulario, con la misma estructura y clase "h6" --}}
-                    <h6>
+                    <h6 style="color:white;">
                         @if($fisioterapia->exists)
                             EDITAR FICHA DE FISIOTERAPIA PARA: <strong>{{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</strong>
                         @else
@@ -115,7 +115,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="direccion_am">DIRECCIÓN DE DOMICILIO:</label>
-                                        <div class="read-only-field">{{ optional($adulto->persona)->direccion ?? 'N/A' }}</div>
+                                        <div class="read-only-field">{{ optional($adulto->persona)->domicilio ?? 'N/A' }}</div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">

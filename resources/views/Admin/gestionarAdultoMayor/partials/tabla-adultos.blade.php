@@ -30,16 +30,13 @@
                     <td>{{ $adulto->telefono }}</td>
                     <td>{{ $adulto->domicilio }}</td>
                     <td class="text-center">
-                        {{-- ===================== CORRECCIÓN ===================== --}}
-                        {{-- Se eliminó el prefijo 'admin.' del nombre de la ruta para que coincida con web.php --}}
+                        {{-- Botón para Editar --}}
                         <a href="{{ route('gestionar-adultomayor.editar', $adulto->ci) }}" class="btn btn-sm btn-primary btn-action" data-bs-toggle="tooltip" title="Editar">
                             <i class="fe fe-edit"></i>
                         </a>
 
-                        {{-- Botón para Eliminar (que activa el modal) --}}
+                        {{-- Botón para Eliminar (que activa SweetAlert2) --}}
                         <button type="button" class="btn btn-sm btn-danger btn-action btn-eliminar" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalEliminar"
                                 data-ci="{{ $adulto->ci }}"
                                 data-nombre="{{ $adulto->nombres }} {{ $adulto->primer_apellido }}"
                                 data-bs-toggle="tooltip" title="Eliminar">

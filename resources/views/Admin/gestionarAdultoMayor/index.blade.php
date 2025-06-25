@@ -8,7 +8,6 @@
         <h1 class="page-title">Gestionar Adultos Mayores</h1>
         <div>
             <ol class="breadcrumb">
-                {{-- ===================== CORRECCIÓN 1 ===================== --}}
                 {{-- Se genera la ruta del dashboard dinámicamente según el rol del usuario logueado. --}}
                 @php
                     $dashboardRoute = optional(Auth::user()->rol)->nombre_rol . '.dashboard';
@@ -140,7 +139,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingIndicator.style.display = 'block';
         tablaContainer.style.opacity = '0.5';
         
-        // ===================== CORRECCIÓN 3 =====================
         const url = `{{ route('gestionar-adultomayor.buscar') }}?busqueda=${encodeURIComponent(termino)}&page=${page}`;
 
         fetch(url, {
@@ -201,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ci = this.dataset.ci;
                 const nombre = this.dataset.nombre;
                 
-                // ===================== CORRECCIÓN 4 =====================
                 // Se construye la URL del formulario de eliminación con la ruta correcta
                 let deleteUrl = "{{ route('gestionar-adultomayor.eliminar', ['ci' => ':ci']) }}";
                 deleteUrl = deleteUrl.replace(':ci', ci);
