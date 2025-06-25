@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+// ===== INICIO DE LA MODIFICACIÓN =====
+use Illuminate\Database\Eloquent\SoftDeletes;
+// ===== FIN DE LA MODIFICACIÓN =====
 
 class AdultoMayor extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // Habilita Soft Deletes para este modelo
 
     protected $table = 'adulto_mayor'; // Nombre de la tabla
     protected $primaryKey = 'id_adulto'; // Clave primaria

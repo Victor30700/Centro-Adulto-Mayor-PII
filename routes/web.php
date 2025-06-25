@@ -54,6 +54,19 @@ Route::middleware('guest')->group(function () {
 
         // --- GRUPO DE RUTAS SOLO PARA ADMINISTRADOR ---
         Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+            
+        //==============================================================================================================================
+        // ===== INICIO DE LA MODIFICACIÓN: RUTAS PARA PAPELERA DE RECICLAJE =====
+        Route::prefix('gestionar-usuarios')->name('gestionar-usuarios.')->group(function () {
+            // Ruta para MOSTRAR la papelera de reciclaje
+            Route::get('/trash', [GestionarUsuariosController::class, 'trash'])->name('trash');
+            
+            // Ruta para RESTAURAR un registro desde la papelera
+            Route::put('/restore/{ci}', [GestionarUsuariosController::class, 'restore'])->name('restore');
+        });
+        // ===== FIN DE LA MODIFICACIÓN =====
+        //==============================================================================================================================
+
             Route::resource('gestionar-usuarios', GestionarUsuariosController::class)->except(['show']);
             Route::patch('/gestionar-usuarios/{id}/toggle-activity', [GestionarUsuariosController::class, 'toggleActivity'])->name('gestionar-usuarios.toggleActivity');
             

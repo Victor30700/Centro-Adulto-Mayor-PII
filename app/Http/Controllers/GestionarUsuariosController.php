@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Persona;
 use App\Models\Rol;
+use App\Models\AdultoMayor; // <-- ESTA ES LA LÍNEA QUE FALTABA
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -200,15 +201,15 @@ class GestionarUsuariosController extends Controller
                 $user->persona()->delete();
             }
             DB::commit();
-            Log::info("Usuario CI: {$user->ci} y persona asociada eliminados (lógicamente) por el administrador.");
-            
+             
+            // ===== CAMBIO EN EL MENSAJE =====
+            return redirect()->route('admin.gestionar-usuarios.index')->with('success', 'Usuario enviado a la papelera exitosamente.');
             // --- CAMBIO PRINCIPAL: De JSON a redirección con mensaje de éxito ---
-            return redirect()->route('admin.gestionar-usuarios.index')->with('success', 'Usuario eliminado exitosamente.');
+           //eturn redirect()->route('admin.gestionar-usuarios.index')->with('success', 'Usuario eliminado exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error al eliminar usuario {$id_usuario}: " . $e->getMessage());
-
             // --- CAMBIO: De JSON a redirección con mensaje de error ---
             return redirect()->route('admin.gestionar-usuarios.index')->with('error', 'Ocurrió un error al eliminar el usuario.');
         }
@@ -235,4 +236,60 @@ class GestionarUsuariosController extends Controller
         $status = $user->active ? 'activado' : 'desactivado';
         return back()->with('success', "Usuario {$status} exitosamente.");
     }
+
+    /**
+     * Muestra la lista de usuarios y adultos mayores eliminados lógicamente.
+     */
+    public function trash(Request $request)
+    {
+        // Se obtiene el término de búsqueda desde la URL.
+        $searchTerm = $request->input('search');
+
+        // --- Consulta para Usuarios del Sistema eliminados ---
+        $deletedUsersQuery = User::onlyTrashed()->with('persona', 'rol');
+        
+        // --- Consulta para Adultos Mayores eliminados ---
+        $deletedAdultosMayoresQuery = AdultoMayor::onlyTrashed()->with('persona');
+
+        // Si hay un término de búsqueda, se aplica el filtro a AMBAS consultas.
+        if (!empty($searchTerm)) {
+            // Se usa 'ILIKE' para que la búsqueda no distinga mayúsculas/minúsculas en PostgreSQL.
+            // Si usas MySQL, puedes cambiarlo por 'LIKE'.
+            $deletedUsersQuery->where('ci', 'ILIKE', '%' . $searchTerm . '%');
+            $deletedAdultosMayoresQuery->where('ci', 'ILIKE', '%' . $searchTerm . '%');
+        }
+
+        // Se ejecutan las consultas para obtener las colecciones finales.
+        $deletedUsers = $deletedUsersQuery->get();
+        $deletedAdultosMayores = $deletedAdultosMayoresQuery->get();
+
+        // Se pasa la data a la vista.
+        return view('Admin.gestionarUsers.trash', compact('deletedUsers', 'deletedAdultosMayores'));
+    }
+
+    /**
+     * Restaura un registro eliminado lógicamente (Persona y sus roles asociados).
+     */
+    public function restore($ci)
+    {
+        DB::beginTransaction();
+        try {
+            $persona = Persona::onlyTrashed()->where('ci', $ci)->firstOrFail();
+            $persona->restore();
+
+            // Intenta restaurar el Usuario del Sistema si existe
+            User::onlyTrashed()->where('ci', $ci)->restore();
+
+            // Intenta restaurar el Adulto Mayor si existe
+            AdultoMayor::onlyTrashed()->where('ci', $ci)->restore();
+
+            DB::commit();
+            return redirect()->route('admin.gestionar-usuarios.trash')->with('success', 'El registro con CI ' . $ci . ' ha sido restaurado exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error al restaurar el registro con CI {$ci}: " . $e->getMessage());
+            return redirect()->route('admin.gestionar-usuarios.trash')->with('error', 'No se pudo restaurar el registro.');
+        }
+    }
+    // --- FIN DE NUEVOS MÉTODOS ---
 }

@@ -27,6 +27,11 @@
                     <h3 class="card-title text-white mb-0">
                         <i class="fe fe-users me-2"></i>Listado de Adultos Mayores
                     </h3>
+                   {{-- ===== AÑADIR ESTE BOTÓN ===== --}}
+                    <a href="{{ route('admin.gestionar-usuarios.trash') }}" class="btn btn-secondary btn-sm ms-2" data-bs-toggle="tooltip" title="Ver registros eliminados">
+                        <i class="fe fe-trash-2"></i> Papelera
+                    </a>
+                    {{-- ============================== --}}
                     <div class="card-options">
                         @if(isset($adultosMayores) && $adultosMayores->total() > 0)
                             <span class="badge bg-light text-success fs-12">

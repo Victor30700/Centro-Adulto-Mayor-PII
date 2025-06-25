@@ -231,9 +231,8 @@ class AdminController extends Controller
     public function gestionarAdultoMayorIndex()
     {
         try {
-            // Obtener todos los adultos mayores con sus datos de persona
-            $adultosMayores = DB::table('adulto_mayor as am')
-                ->join('persona as p', 'am.ci', '=', 'p.ci')
+            // Se inicia la consulta con el Modelo Eloquent en lugar de DB::table()
+            $adultosMayores = AdultoMayor::join('persona as p', 'adulto_mayor.ci', '=', 'p.ci')
                 ->select([
                     'p.ci',
                     'p.nombres',
@@ -246,12 +245,12 @@ class AdminController extends Controller
                     'p.domicilio',
                     'p.telefono',
                     'p.zona_comunidad',
-                    'am.id_adulto', // Clave primaria de adulto_mayor
-                    'am.discapacidad',
-                    'am.vive_con',
-                    'am.migrante',
-                    'am.nro_caso',
-                    'am.fecha as fecha_registro'
+                    'adulto_mayor.id_adulto', // Clave primaria de adulto_mayor
+                    'adulto_mayor.discapacidad',
+                    'adulto_mayor.vive_con',
+                    'adulto_mayor.migrante',
+                    'adulto_mayor.nro_caso',
+                    'adulto_mayor.fecha as fecha_registro'
                 ])
                 ->orderBy('p.primer_apellido', 'asc')
                 ->orderBy('p.nombres', 'asc')
@@ -261,21 +260,22 @@ class AdminController extends Controller
             
         } catch (\Exception $e) {
             Log::error('Error al cargar listado de adultos mayores: ' . $e->getMessage());
-            return redirect()->route('admin.dashboard') // O alguna otra ruta de fallback
-                            ->with('error', 'Error al cargar el listado de adultos mayores.');
+            return redirect()->route('admin.dashboard')
+                             ->with('error', 'Error al cargar el listado de adultos mayores.');
         }
     }
+
 
     /**
     * Buscar adultos mayores (AJAX)
     */
-    public function buscarAdultoMayor(Request $request)
+   public function buscarAdultoMayor(Request $request)
     {
         try {
             $busqueda = $request->get('busqueda', '');
             
-            $query = DB::table('adulto_mayor as am')
-                ->join('persona as p', 'am.ci', '=', 'p.ci')
+            // Se inicia la consulta con el Modelo Eloquent
+            $query = AdultoMayor::join('persona as p', 'adulto_mayor.ci', '=', 'p.ci')
                 ->select([
                     'p.ci',
                     'p.nombres',
@@ -298,24 +298,22 @@ class AdminController extends Controller
 
             if (!empty($busqueda)) {
                 $query->where(function($q) use ($busqueda) {
-                    $q->where('p.ci', 'ILIKE', '%' . $busqueda . '%') // ILIKE para PostgreSQL (case-insensitive)
-                    ->orWhere('p.nombres', 'ILIKE', '%' . $busqueda . '%')
-                    ->orWhere('p.primer_apellido', 'ILIKE', '%' . $busqueda . '%')
-                    ->orWhere('p.segundo_apellido', 'ILIKE', '%' . $busqueda . '%')
-                    // Para PostgreSQL, la concatenación es con ||
-                    ->orWhereRaw("p.nombres || ' ' || p.primer_apellido || ' ' || COALESCE(p.segundo_apellido, '') ILIKE ?", ['%' . $busqueda . '%']);
+                    $q->where('p.ci', 'ILIKE', '%' . $busqueda . '%')
+                      ->orWhere('p.nombres', 'ILIKE', '%' . $busqueda . '%')
+                      ->orWhere('p.primer_apellido', 'ILIKE', '%' . $busqueda . '%')
+                      ->orWhere('p.segundo_apellido', 'ILIKE', '%' . $busqueda . '%')
+                      ->orWhereRaw("p.nombres || ' ' || p.primer_apellido || ' ' || COALESCE(p.segundo_apellido, '') ILIKE ?", ['%' . $busqueda . '%']);
                 });
             }
 
             $adultosMayores = $query->orderBy('p.primer_apellido', 'asc')
-                                    ->orderBy('p.nombres', 'asc')
-                                    ->paginate(10); // Paginación también aquí
+                                     ->orderBy('p.nombres', 'asc')
+                                     ->paginate(10);
 
-            // Devolver HTML de la tabla y de la paginación
             return response()->json([
                 'success' => true,
                 'html' => view('Admin.gestionarAdultoMayor.partials.tabla-adultos', compact('adultosMayores'))->render(),
-                'pagination' => $adultosMayores->links()->toHtml(), // CORRECCIÓN AQUÍ
+                'pagination' => $adultosMayores->links()->toHtml(),
             ]);
             
         } catch (\Exception $e) {
@@ -323,7 +321,7 @@ class AdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error en la búsqueda. Detalles: ' . $e->getMessage()
-            ], 500); // Es buena práctica devolver un código de error HTTP apropiado
+            ], 500);
         }
     }
 
@@ -481,54 +479,48 @@ class AdminController extends Controller
     /**
     * Eliminar adulto mayor
     */
-    public function eliminarAdultoMayor($ci)
+     public function eliminarAdultoMayor($ci)
     {
         DB::beginTransaction();
 
         try {
-            // Verificar si existe la persona y el adulto mayor asociado
-            $persona = DB::table('persona')->where('ci', $ci)->first();
+            // Se utiliza el modelo Eloquent para poder aplicar el Soft Delete.
+            $persona = Persona::find($ci);
             
             if (!$persona) {
-                 DB::rollBack(); // No es necesario si no se ha hecho ninguna operación aún, pero por consistencia.
-                return redirect()->route('admin.gestionar-adultomayor.index')
-                                ->with('error', 'Persona no encontrada.');
+                // La redirección no necesita rollback si no se hizo nada.
+                return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+                                 ->with('error', 'Persona no encontrada.');
             }
 
-            $existeAdultoMayor = DB::table('adulto_mayor')->where('ci', $ci)->exists();
-            if (!$existeAdultoMayor) {
-                DB::rollBack();
-                 // Si la persona existe pero no el adulto mayor, podría ser un estado inconsistente.
-                 // O quizás solo se quiere eliminar la persona si no hay adulto mayor.
-                 // Por ahora, asumimos que si se intenta eliminar "adulto mayor", ambos deben existir.
-                Log::warning('Intento de eliminar adulto mayor no encontrado, pero persona sí existe.', ['ci' => $ci]);
-                // Decidir si eliminar solo persona o devolver error. Aquí devuelvo error.
-                return redirect()->route('admin.gestionar-adultomayor.index')
-                                ->with('error', 'Registro de Adulto Mayor asociado a la persona no encontrado.');
+            // Eliminar lógicamente el registro de AdultoMayor asociado (si existe).
+            // Eloquent se encargará de añadir la condición 'deleted_at is null'.
+            if ($persona->adultoMayor) {
+                $persona->adultoMayor->delete(); // Esto aplica Soft Delete
             }
 
-
-            // Eliminar adulto mayor primero (por la relación de clave foránea si persona.ci es referenciada)
-            // O si la FK es de adulto_mayor.ci a persona.ci, el orden es correcto.
-            DB::table('adulto_mayor')->where('ci', $ci)->delete();
+            // Eliminar lógicamente la persona.
+            // Esto también aplica Soft Delete gracias al trait en el modelo Persona.
+            $persona->delete();
             
-            // Eliminar persona
-            DB::table('persona')->where('ci', $ci)->delete();
+            // Si la persona también era un usuario del sistema, eliminarlo lógicamente también.
+            if ($persona->usuario) {
+                $persona->usuario->delete();
+            }
 
             DB::commit();
 
-            return redirect()->route('admin.gestionar-adultomayor.index')
-                            ->with('success', 'Adulto mayor y datos personales asociados eliminados exitosamente.');
+            return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+                             ->with('success', 'Adulto Mayor enviado a la papelera exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error eliminando adulto mayor: ' . $e->getMessage());
             
-            return redirect()->route('admin.gestionar-adultomayor.index')
-                            ->with('error', 'Error al eliminar el adulto mayor. Detalles: ' . $e->getMessage());
+            return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+                             ->with('error', 'Error al enviar el adulto mayor a la papelera.');
         }
     }
-    
 // MÉTODO ACTUALIZADO PARA EL NUEVO FORMULARIO DE RESPONSABLE DE SALUD
 public function storeResponsableSalud(Request $request)
 {

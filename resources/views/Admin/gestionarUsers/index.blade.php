@@ -32,6 +32,11 @@
                                             <a href="{{ route('admin.registrar-responsable-salud') }}" class="btn btn-white btn-sm">
                                                 <i data-feather="plus-circle"></i> Registrar Nuevo Responsable
                                             </a>
+                                             {{-- ===== AÑADIR ESTE BOTÓN ===== --}}
+                                                <a href="{{ route('admin.gestionar-usuarios.trash') }}" class="btn btn-outline-warning btn-sm ms-2" data-bs-toggle="tooltip" title="Ver registros eliminados">
+                                                    <i class="fe fe-trash-2"></i> Papelera
+                                                </a>
+                                             {{-- ============================== --}}
                                         </div>
                                     </div>
                                     <div class="card-body">
