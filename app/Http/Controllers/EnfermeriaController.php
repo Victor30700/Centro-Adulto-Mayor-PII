@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class EnfermeriaController extends Controller
 {
@@ -202,10 +203,28 @@ class EnfermeriaController extends Controller
      * @param int $cod_enf El ID (cod_enf) de la ficha de enfermería.
      * @return \Illuminate\View\View
      */
-    public function show($cod_enf)
+    public function show($id_adulto) // Cambiado el parámetro a $id_adulto
     {
-        $fichaEnfermeria = Enfermeria::with('adulto.persona', 'usuario.persona')->findOrFail($cod_enf);
-        return view('Medico.verDetallesEnfermeria', compact('fichaEnfermeria'));
+        try {
+            // Cargar el AdultoMayor con todas sus fichas de enfermería y la información del usuario que las creó.
+            $adulto = AdultoMayor::with([
+                'persona',
+                'enfermerias.usuario.persona' // Asumiendo que la relación es 'enfermerias' en AdultoMayor
+            ])->findOrFail($id_adulto);
+
+            // Ordenar las fichas por fecha de creación descendente para mostrarlas de la más nueva a la más antigua
+            $fichasEnfermeria = $adulto->enfermerias->sortByDesc('created_at');
+
+            // Pasamos el objeto $adulto completo y la colección de fichas de enfermería
+            return view('Medico.verDetallesEnfermeria', compact('adulto', 'fichasEnfermeria'));
+
+        } catch (ModelNotFoundException $e) {
+            Log::error("Adulto Mayor no encontrado con ID: {$id_adulto}. Error: " . $e->getMessage());
+            return redirect()->route('responsable.enfermeria.enfermeria.index')->with('error', 'El adulto mayor no existe o ha sido eliminado.');
+        } catch (\Exception $e) {
+            Log::error('Error al cargar detalles de fichas de enfermería: ' . $e->getMessage(), ['id_adulto' => $id_adulto, 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Ocurrió un error al cargar las fichas de enfermería: ' . $e->getMessage());
+        }
     }
 
     /**

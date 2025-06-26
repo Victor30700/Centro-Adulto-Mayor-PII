@@ -139,6 +139,11 @@ class AdultoMayor extends Model
     {
         return $this->hasOne(HistoriaClinica::class, 'id_adulto', 'id_adulto')->latest('created_at'); // O por un campo de fecha relevante en HistoriaClinica
     }
+    
+    public function enfermerias()
+    {
+        return $this->hasMany(Enfermeria::class, 'id_adulto', 'id_adulto');
+    }
     /**
      * Obtiene la última ficha de enfermería para el adulto mayor.
      */

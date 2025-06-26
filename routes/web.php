@@ -274,7 +274,7 @@ Route::middleware('guest')->group(function () {
                 Route::post('{id_adulto}/store', [EnfermeriaController::class, 'store'])->name('store');
                 Route::get('{cod_enf}/edit', [EnfermeriaController::class, 'edit'])->name('edit');
                 Route::put('{cod_enf}', [EnfermeriaController::class, 'update'])->name('update');
-                Route::get('{cod_enf}/show', [EnfermeriaController::class, 'show'])->name('show');
+                Route::get('adulto/{id_adulto}/show', [EnfermeriaController::class, 'show'])->name('show');
                 Route::delete('{cod_enf}', [EnfermeriaController::class, 'destroy'])->name('destroy');
             });
             // (MODULO MÉDICO) REPORTES DE HISTORIA CLÍNICA Y ENFERMERÍA #########################################
@@ -301,7 +301,7 @@ Route::middleware('guest')->group(function () {
                     Route::post('/fisioterapia/{id_adulto}/store', [FisioKineController::class, 'storeFisio'])->name('storeFisio');
                     Route::get('/fisioterapia/{cod_fisio}/editar', [FisioKineController::class, 'editFisio'])->name('editFisio'); // GET para mostrar formulario
                     Route::put('/fisioterapia/{cod_fisio}/update', [FisioKineController::class, 'updateFisio'])->name('updateFisio'); // PUT para actualizar
-                    Route::get('/fisioterapia/{cod_fisio}/ver', [FisioKineController::class, 'showFisio'])->name('showFisio'); // GET para ver detalles
+                    Route::get('/adulto/{id_adulto}/verFichasFisio', [FisioKineController::class, 'showFisio'])->name('showFisio'); // GET para ver detalles
                     Route::delete('/fisioterapia/{cod_fisio}/eliminar', [FisioKineController::class, 'destroyFisio'])->name('destroyFisio'); // DELETE para eliminar        
             });
             // Rutas para el Reporte de Fichas de Fisioterapia
@@ -323,7 +323,7 @@ Route::middleware('guest')->group(function () {
                     Route::post('/kinesiologia/{id_adulto}/store', [FisioKineController::class, 'storeKine'])->name('storeKine');
                     Route::get('/kinesiologia/{cod_kine}/editar', [FisioKineController::class, 'editKine'])->name('editKine'); // GET para mostrar formulario
                     Route::put('/kinesiologia/{cod_kine}/update', [FisioKineController::class, 'updateKine'])->name('updateKine'); // PUT para actualizar
-                    Route::get('/kinesiologia/{cod_kine}/ver', [FisioKineController::class, 'showKine'])->name('showKine'); // GET para ver detalles
+                    Route::get('/adulto/{id_adulto}/verFichasKine', [FisioKineController::class, 'showKine'])->name('showKine'); // GET para ver detalles
                     Route::delete('/kinesiologia/{cod_kine}/eliminar', [FisioKineController::class, 'destroyKine'])->name('destroyKine'); // DELETE para eliminar
             });
                 // Rutas para el Reporte de Fichas de Kinesiología

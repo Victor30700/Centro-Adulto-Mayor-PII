@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException; // Importar esta excepción
 
 class FisioKineController extends Controller
 {
@@ -26,14 +27,11 @@ class FisioKineController extends Controller
     {
         $search = $request->query('search');
         $adultos = collect();
-        $totalAdultos = AdultoMayor::count(); 
+        $totalAdultos = AdultoMayor::count();
 
         try {
-            // Se asume que AdultoMayor::count() ya es correcto.
-            // Para la tabla, la consulta es explícita. Si AdultoMayor usa SoftDeletes,
-            // y quieres mostrar TODOS los adultos (incluidos soft-deleted), usa ->withTrashed() aquí también.
-            // Si solo quieres los NO eliminados suavemente, deja como está.
-            $query = AdultoMayor::with('persona', 'latestFisioterapia');
+            $query = AdultoMayor::with('persona', 'latestFisioterapia', 'fisioterapias'); // Cargar todas las fichas para el cálculo de exists()
+                                                                                        // y también latestFisioterapia para los botones del index
 
             if ($search) {
                 $query->whereHas('persona', function ($q) use ($search) {
@@ -50,7 +48,6 @@ class FisioKineController extends Controller
                 'count_total' => $totalAdultos,
                 'count_paginated' => $adultos->count(),
                 'is_empty' => $adultos->isEmpty(),
-                'adultos_data_first_5' => $adultos->take(5)->toArray(),
                 'search_term' => $search
             ]);
 
@@ -73,20 +70,13 @@ class FisioKineController extends Controller
     {
         Log::info('Intentando cargar formulario createFisio para id_adulto:', ['id_adulto_recibido' => $id_adulto]);
 
-        // Diagnóstico: Verificar si el modelo AdultoMayor usa SoftDeletes
         $usesSoftDeletes = in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses(AdultoMayor::class));
         Log::info('AdultoMayor model uses SoftDeletes:', ['status' => $usesSoftDeletes]);
         Log::info('AdultoMayor primary key:', ['key' => (new AdultoMayor())->getKeyName()]);
 
 
         try {
-            // Intentamos encontrar el AdultoMayor.
-            // Si el modelo AdultoMayor usa SoftDeletes, findOrFail por defecto NO encuentra los eliminados suavemente.
-            // Si el problema es ese, añadir ->withTrashed() aquí lo solucionaría para propósitos de crear una ficha
-            // para un adulto "soft-deleted" (lo cual no es lo usual, pero ayuda a diagnosticar).
             $adulto = AdultoMayor::with('persona');
-
-            // Si el modelo usa SoftDeletes y necesitas incluir los eliminados, descomenta la siguiente línea:
             if ($usesSoftDeletes) {
                 $adulto = $adulto->withTrashed();
             }
@@ -232,31 +222,34 @@ class FisioKineController extends Controller
     }
 
     /**
-     * Muestra los detalles de una ficha de Fisioterapia.
+     * Muestra los detalles de TODAS las fichas de Fisioterapia para un Adulto Mayor específico.
      *
-     * @param int $cod_fisio
+     * @param int $id_adulto El ID del adulto mayor.
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function showFisio($cod_fisio)
+    public function showFisio($id_adulto) // Cambiado el parámetro a $id_adulto
     {
         try {
-            // Se elimina la llamada a withTrashed() porque el modelo Fisioterapia no usa SoftDeletes.
-            $fisioterapia = Fisioterapia::with('adulto.persona', 'historiaClinica', 'usuario.persona')
-                                         ->findOrFail($cod_fisio);
-            
-            // Asegúrate que esta es la vista correcta que quieres renderizar
-            return view('Medico.verDetallesFisio', compact('fisioterapia'));
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Si la ficha no se encuentra, muestra un mensaje más específico con el ID.
-            Log::error('Error: Ficha de Fisioterapia no encontrada para ID: ' . $cod_fisio, ['exception' => $e]);
-            return back()->with('error', 'La ficha de Fisioterapia con el ID ' . $cod_fisio . ' no fue encontrada. Verifique el código.');
+            // Cargar el AdultoMayor con todas sus fichas de fisioterapia y la información del usuario que las creó,
+            // y la historia clínica asociada a cada ficha (si existe).
+            $adulto = AdultoMayor::with([
+                'persona',
+                'fisioterapias.usuario.persona', // Asumiendo que la relación es 'fisioterapias' en AdultoMayor
+                'fisioterapias.historiaClinica' // Y que Fisioterapia tiene relación con HistoriaClinica
+            ])->findOrFail($id_adulto);
+
+            // Ordenar las fichas por fecha de creación descendente para mostrarlas de la más nueva a la más antigua
+            $fichasFisioterapia = $adulto->fisioterapias->sortByDesc('created_at');
+
+            // Pasamos el objeto $adulto completo y la colección de fichas de fisioterapia
+            return view('Medico.verDetallesFisio', compact('adulto', 'fichasFisioterapia'));
+
+        } catch (ModelNotFoundException $e) {
+            Log::error("Adulto Mayor no encontrado con ID: {$id_adulto} en showFisio. Error: " . $e->getMessage());
+            return redirect()->route('responsable.fisioterapia.fisiokine.indexFisio')->with('error', 'El adulto mayor no existe o ha sido eliminado.');
         } catch (\Exception $e) {
-            // Este catch es para cualquier otro tipo de error inesperado.
-            // Registra el error completo en los logs de Laravel (storage/logs/laravel.log)
-            Log::error('Error inesperado en FisioKineController@showFisio: ' . $e->getMessage(), ['cod_fisio' => $cod_fisio, 'trace' => $e->getTraceAsString()]);
-            
-            // Muestra el mensaje de error específico al usuario.
-            return back()->with('error', 'Ocurrió un error inesperado al cargar los detalles de la ficha de Fisioterapia. Error interno: ' . $e->getMessage());
+            Log::error('Error al cargar detalles de fichas de fisioterapia: ' . $e->getMessage(), ['id_adulto' => $id_adulto, 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Ocurrió un error al cargar las fichas de fisioterapia: ' . $e->getMessage());
         }
     }
 
@@ -270,8 +263,10 @@ class FisioKineController extends Controller
     {
         try {
             $fisioterapia = Fisioterapia::findOrFail($cod_fisio);
+            $idAdulto = $fisioterapia->id_adulto; // Obtener el id_adulto antes de eliminar
             $fisioterapia->delete();
-            return redirect()->route('responsable.fisioterapia.fisiokine.indexFisio')->with('success', 'Ficha de Fisioterapia eliminada exitosamente.');
+            // Redirigir de vuelta a la vista de detalles de todas las fichas del adulto mayor
+            return redirect()->route('responsable.fisioterapia.fisiokine.showFisio', ['id_adulto' => $idAdulto])->with('success', 'Ficha de Fisioterapia eliminada exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error al eliminar Ficha de Fisioterapia: ' . $e->getMessage(), ['cod_fisio' => $cod_fisio, 'exception' => $e]);
             return back()->with('error', 'Error al eliminar la Ficha de Fisioterapia: ' . $e->getMessage());
@@ -291,10 +286,11 @@ class FisioKineController extends Controller
     {
         $search = $request->query('search');
         $adultos = collect();
-        $totalAdultos = AdultoMayor::count(); 
+        $totalAdultos = AdultoMayor::count();
 
         try {
-            $query = AdultoMayor::with('persona', 'latestKinesiologia');
+            $query = AdultoMayor::with('persona', 'latestKinesiologia', 'kinesiologias'); // Cargar todas las fichas para exists()
+                                                                                       // y latestKinesiologia para los botones del index
 
             if ($search) {
                 $query->whereHas('persona', function ($q) use ($search) {
@@ -351,7 +347,7 @@ class FisioKineController extends Controller
             // Cargar la historia clínica asociada al adulto mayor
             $historiaClinica = HistoriaClinica::where('id_adulto', $id_adulto)->first();
 
-            $kinesiologia = new Kinesiologia(); 
+            $kinesiologia = new Kinesiologia();
             return view('Medico.registrarFichaKine', compact('adulto', 'kinesiologia', 'historiaClinica'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error('Error: AdultoMayor no encontrado en createKine para ID: ' . $id_adulto, ['exception' => $e]);
@@ -389,7 +385,7 @@ class FisioKineController extends Controller
 
             Kinesiologia::create([
                 'id_adulto' => $adulto->id_adulto,
-                'id_usuario' => Auth::id(), 
+                'id_usuario' => Auth::id(),
                 'id_historia' => $request->id_historia,
                 'entrenamiento_funcional' => $request->has('entrenamiento_funcional'),
                 'gimnasio_maquina' => $request->has('gimnasio_maquina'),
@@ -399,7 +395,7 @@ class FisioKineController extends Controller
                 'tarde' => $request->has('tarde'),
                 // Los campos de texto/fecha de Fisioterapia NO se usan en este formulario de Kinesiología.
                 // Se establecen a null si la columna es nullable para evitar errores de NOT NULL.
-                'num_emergencia' => null, 
+                'num_emergencia' => null,
                 'enfermedades_actuales' => null,
                 'alergias' => null,
                 'fecha_programacion' => null,
@@ -493,20 +489,34 @@ class FisioKineController extends Controller
     }
 
     /**
-     * Muestra los detalles de una ficha de Kinesiología.
+     * Muestra los detalles de TODAS las fichas de Kinesiología para un Adulto Mayor específico.
      *
-     * @param int $cod_kine
+     * @param int $id_adulto El ID del adulto mayor.
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
-    public function showKine($cod_kine)
+    public function showKine($id_adulto) // Cambiado el parámetro a $id_adulto
     {
         try {
-            // Asegurarse de cargar historiaClinica aquí también
-            $kinesiologia = Kinesiologia::with('adulto.persona', 'historiaClinica', 'usuario.persona')->findOrFail($cod_kine);
-            return view('Medico.verDetallesKine', compact('kinesiologia'));
+            // Cargar el AdultoMayor con todas sus fichas de kinesiología y la información del usuario que las creó,
+            // y la historia clínica asociada a cada ficha (si existe).
+            $adulto = AdultoMayor::with([
+                'persona',
+                'kinesiologias.usuario.persona', // Asumiendo que la relación es 'kinesiologias' en AdultoMayor
+                'kinesiologias.historiaClinica' // Y que Kinesiologia tiene relación con HistoriaClinica
+            ])->findOrFail($id_adulto);
+
+            // Ordenar las fichas por fecha de creación descendente para mostrarlas de la más nueva a la más antigua
+            $fichasKinesiologia = $adulto->kinesiologias->sortByDesc('created_at');
+
+            // Pasamos el objeto $adulto completo y la colección de fichas de kinesiología
+            return view('Medico.verDetallesKine', compact('adulto', 'fichasKinesiologia'));
+
+        } catch (ModelNotFoundException $e) {
+            Log::error("Adulto Mayor no encontrado con ID: {$id_adulto} en showKine. Error: " . $e->getMessage());
+            return redirect()->route('responsable.kinesiologia.fisiokine.indexKine')->with('error', 'El adulto mayor no existe o ha sido eliminado.');
         } catch (\Exception $e) {
-            Log::error('Error en FisioKineController@showKine: ' . $e->getMessage(), ['cod_kine' => $cod_kine, 'exception' => $e]);
-            return back()->with('error', 'No se pudo cargar los detalles de la ficha de Kinesiología.');
+            Log::error('Error al cargar detalles de fichas de kinesiología: ' . $e->getMessage(), ['id_adulto' => $id_adulto, 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Ocurrió un error al cargar las fichas de kinesiología: ' . $e->getMessage());
         }
     }
 
@@ -520,8 +530,10 @@ class FisioKineController extends Controller
     {
         try {
             $kinesiologia = Kinesiologia::findOrFail($cod_kine);
+            $idAdulto = $kinesiologia->id_adulto; // Obtener el id_adulto antes de eliminar
             $kinesiologia->delete();
-            return redirect()->route('responsable.kinesiologia.fisiokine.indexKine')->with('success', 'Ficha de Kinesiología eliminada exitosamente.');
+            // Redirigir de vuelta a la vista de detalles de todas las fichas del adulto mayor
+            return redirect()->route('responsable.kinesiologia.fisiokine.showKine', ['id_adulto' => $idAdulto])->with('success', 'Ficha de Kinesiología eliminada exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error al eliminar Ficha de Kinesiología: ' . $e->getMessage(), ['cod_kine' => $cod_kine, 'exception' => $e]);
             return back()->with('error', 'Error al eliminar la Ficha de Kinesiología: ' . $e->getMessage());
