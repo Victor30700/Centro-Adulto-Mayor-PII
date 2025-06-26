@@ -144,7 +144,8 @@
     display: block;
     width: 10px; /* Tamaño del círculo interior */
     height: 10px; /* Tamaño del círculo interior */
-    background-color: white; /* Color del círculo interior */
+    border-color: #9b2c2c; /* Color del borde cuando está seleccionado */
+    background-color: #e53e3e; /* Fondo del círculo exterior cuando está seleccionado */
     border-radius: 50%;
     position: absolute;
     top: 50%;

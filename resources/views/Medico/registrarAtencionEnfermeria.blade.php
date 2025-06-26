@@ -42,7 +42,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Errores en el formulario',
-                    html: '<ul style="text-align: left;">' + @json($errors->all()).map(error => <li>${error}</li>).join('') + '</ul>',
+                    html: '<ul style="text-align: left;">' + @json($errors->all()).map(error => `<li>${error}</li>`).join('') + '</ul>',
                     confirmButtonText: 'Corregir'
                 });
             });
@@ -235,13 +235,13 @@
                 signosVitales.forEach(field => {
                     const input = document.getElementById(field.id);
                     if (!input.value.trim()) {
-                        errors.push(El campo "${field.label}" es obligatorio.);
+                        errors.push(`El campo "${field.label}" es obligatorio.`);
                     } else if (field.regex && !field.regex.test(input.value.trim())) {
-                        errors.push(El campo "${field.label}" debe tener el formato correcto (ejemplo: ${field.example}).);
+                        errors.push(`El campo "${field.label}" debe tener el formato correcto (ejemplo: ${field.example}).`);
                     } else if (field.isNumber) {
                         const value = parseFloat(input.value.trim());
                         if (isNaN(value) || value < 0) {
-                            errors.push(El campo "${field.label}" debe ser un número positivo.);
+                            errors.push(`El campo "${field.label}" debe ser un número positivo.`);
                         }
                     }
                 });
@@ -259,9 +259,9 @@
                 atenciones.forEach(field => {
                     const input = document.getElementById(field.id);
                     if (!input.value.trim()) {
-                        errors.push(El campo "${field.label}" es obligatorio.);
+                        errors.push(`El campo "${field.label}" es obligatorio.`);
                     } else if (input.value.length > 1000) {
-                        errors.push(El campo "${field.label}" no debe exceder los 1000 caracteres.);
+                        errors.push(`El campo "${field.label}" no debe exceder los 1000 caracteres.`);
                     }
                 });
 
@@ -278,7 +278,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Errores en el formulario',
-                        html: '<ul style="text-align: left;">' + errors.map(error => <li>${error}</li>).join('') + '</ul>',
+                        html: '<ul style="text-align: left;">' + errors.map(error => `<li>${error}</li>`).join('') + '</ul>',
                         confirmButtonText: 'Corregir'
                     });
                 }

@@ -108,9 +108,6 @@
                                                             <td>{{ optional(optional($fichaFisio->usuario)->persona)->nombres }}</td>
                                                             <td>
                                                                 <div class="btn-group" role="group">
-                                                                    <a href="{{ route('responsable.fisioterapia.reportefisio.show', ['cod_fisio' => $fichaFisio->cod_fisio]) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Ver Detalles">
-                                                                        <i class="fe fe-eye"></i>
-                                                                    </a>
                                                                     <a href="{{ route('responsable.fisioterapia.reportefisio.exportWordIndividual', ['cod_fisio' => $fichaFisio->cod_fisio]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Exportar Word">
                                                                         <i class="fe fe-file-text"></i>
                                                                     </a>

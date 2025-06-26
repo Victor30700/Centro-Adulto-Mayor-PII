@@ -1,3 +1,4 @@
+@extends('layouts.main')
 @php
     // --- LÓGICA DE DATOS INTEGRADA EN LA VISTA ---
     // Esto asegura que las variables siempre estén disponibles,
@@ -70,7 +71,7 @@
     extract($data);
 @endphp
 
-@extends('layouts.main')
+
 
 {{-- Inyectar Chart.js y FontAwesome en la sección de cabecera --}}
 @push('styles')
@@ -108,9 +109,9 @@
                         <div>
                             <h4 class="mb-0">¡Bienvenido de nuevo, {{ Auth::user()->name }}!</h4>
                              <div class="d-flex">
-                                <span class="badge bg-primary-transparent me-2">CI: {{ Auth::user()->ci }}</span>
-                                <span class="badge bg-secondary-transparent">Rol: {{ Auth::user()->rol ? Str::ucfirst(Auth::user()->rol->nombre_rol) : 'No definido' }}</span>
-                            </div>
+                                 <span class="badge bg-primary">CI: {{ Auth::user()->ci }}</span>
+                                 <span class="badge bg-secondary">Rol: {{ Auth::user()->rol ? Str::ucfirst(Auth::user()->rol->nombre_rol) : 'No definido' }}</span>
+                             </div>
                         </div>
                     </div>
                 </div>
@@ -144,19 +145,6 @@
     <div class="row">
         
 
-        <!-- Columna de Gráfico -->
-        <div class="col-lg-7 col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Resumen de Casos por Área</h3>
-                </div>
-                <div class="card-body">
-                    <canvas id="caseChart" style="max-height: 300px;"></canvas>
-                </div>
-            </div>
-        </div>
-
-
         <!-- Columna de Estadísticas -->
         <div class="col-lg-5 col-md-12">
             <div class="card">
@@ -164,87 +152,54 @@
                     <h3 class="card-title">Estadísticas Clave</h3>
                 </div>
                 <div class="card-body">
-                     <div class="d-flex align-items-center mb-4">
-                        <div class="me-3">
-                            <span class="avatar avatar-md rounded-circle bg-primary-transparent"><i class="fa fa-book text-primary"></i></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Historias Clínicas</h6>
-                            <h2 class="mb-0 number-font">{{ $totalHistoriasClinicas ?? 0 }}</h2>
-                        </div>
-                    </div>
-                    @if(isset($atencionesEnfermeria) && $atencionesEnfermeria > 0)
-                     <div class="d-flex align-items-center mb-4">
-                        <div class="me-3">
-                            <span class="avatar avatar-md rounded-circle bg-success-transparent"><i class="fe fe-heart text-success"></i></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Atenciones de Enfermería</h6>
-                            <h2 class="mb-0 number-font">{{ $atencionesEnfermeria }}</h2>
-                        </div>
-                    </div>
-                    @endif
-                     @if(isset($fichasFisioKine) && $fichasFisioKine > 0)
-                     <div class="d-flex align-items-center mb-4">
-                        <div class="me-3">
-                            <span class="avatar avatar-md rounded-circle bg-warning-transparent"><i class="fe fe-activity text-warning"></i></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Fichas Fisio/Kine</h6>
-                            <h2 class="mb-0 number-font">{{ $fichasFisioKine }}</h2>
-                        </div>
-                    </div>
-                    @endif
-                     <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <span class="avatar avatar-md rounded-circle bg-info-transparent"><i class="fa fa-users text-info"></i></span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">Total Pacientes</h6>
-                            <h2 class="mb-0 number-font">{{ $totalPacientes ?? 0 }}</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ACCESOS RÁPIDOS (GENERADOS DINÁMICAMENTE) -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Accesos Rápidos</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @forelse ($shortcuts as $shortcut)
-                            <div class="col-lg-4 col-md-6 mb-4">
-                                <a href="{{ route($shortcut['route']) }}" class="card text-center shadow-sm h-100 card-hover">
-                                    <div class="card-body">
-                                        <div class="feature-icon-1 bg-{{$shortcut['color']}}-transparent mb-4">
-                                            <i class="{{ $shortcut['icon'] }}"></i>
-                                        </div>
-                                        <h5 class="card-title">{{ $shortcut['title'] }}</h5>
-                                        <p class="card-text text-muted">{{ $shortcut['text'] }}</p>
-                                    </div>
-                                </a>
-                            </div>
-                        @empty
-                            <div class="col-12">
-                                <div class="alert alert-warning text-center">
-                                    <i class="fe fe-alert-triangle fs-18 me-2"></i>
-                                    <strong>No hay accesos rápidos definidos para tu área de especialidad.</strong><br>
-                                    Contacta al administrador para más información.
-                                </div>
-                            </div>
-                        @endforelse
-                    </div>
+                      <div class="d-flex align-items-center mb-4">
+                           <div class="me-3">
+                               <span class="avatar avatar-md rounded-circle bg-primary-transparent"><i class="fa fa-book text-primary"></i></span>
+                           </div>
+                           <div class="flex-grow-1">
+                               <h6 class="mb-1">Historias Clínicas</h6>
+                               <h2 class="mb-0 number-font">{{ $totalHistoriasClinicas ?? 0 }}</h2>
+                           </div>
+                       </div>
+                       
+                      {{-- CAMBIO: Se eliminó el @if para que siempre sea visible --}}
+                      <div class="d-flex align-items-center mb-4">
+                           <div class="me-3">
+                               <span class="avatar avatar-md rounded-circle bg-success-transparent"><i class="fe fe-heart text-success"></i></span>
+                           </div>
+                           <div class="flex-grow-1">
+                               <h6 class="mb-1">Atenciones de Enfermería</h6>
+                               <h2 class="mb-0 number-font">{{ $atencionesEnfermeria ?? 0 }}</h2>
+                           </div>
+                       </div>
+                       
+                       {{-- CAMBIO: Se eliminó el @if para que siempre sea visible --}}
+                       <div class="d-flex align-items-center mb-4">
+                           <div class="me-3">
+                               <span class="avatar avatar-md rounded-circle bg-warning-transparent"><i class="fe fe-activity text-warning"></i></span>
+                           </div>
+                           <div class="flex-grow-1">
+                               <h6 class="mb-1">Fichas Fisio/Kine</h6>
+                               <h2 class="mb-0 number-font">{{ $fichasFisioKine ?? 0 }}</h2>
+                           </div>
+                       </div>
+                       
+                      <div class="d-flex align-items-center">
+                           <div class="me-3">
+                               <span class="avatar avatar-md rounded-circle bg-info-transparent"><i class="fa fa-users text-info"></i></span>
+                           </div>
+                           <div class="flex-grow-1">
+                               <h6 class="mb-1">Total Pacientes</h6>
+                               <h2 class="mb-0 number-font">{{ $totalPacientes ?? 0 }}</h2>
+                           </div>
+                       </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
+
+{{-- Inyectar scripts adicionales --}}
 
 @push('scripts')
 <script>
@@ -299,7 +254,7 @@
                 })
                 .catch(error => {
                      document.getElementById('weather-widget').innerHTML = `<i class="fas fa-exclamation-circle text-danger fs-2"></i><p class="mb-0 mt-1 text-muted small">Error clima</p>`;
-                     console.error('Error fetching weather:', error);
+                       console.error('Error fetching weather:', error);
                 });
         }
         

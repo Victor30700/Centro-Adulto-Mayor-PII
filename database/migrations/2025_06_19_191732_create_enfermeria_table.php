@@ -34,7 +34,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_usuario'); // Quien registra/modifica
             $table->foreign('id_usuario')->references('id_usuario')->on('usuario')->onDelete('cascade'); 
             $table->timestamps(); // created_at, updated_at
-
+             // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ----------------------------------------------------
         });
     }
 

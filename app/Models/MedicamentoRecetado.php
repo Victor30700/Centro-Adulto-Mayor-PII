@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. AÑADIR ESTA LÍNEA
 
 class MedicamentoRecetado extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // <-- 2. AÑADIR 'SoftDeletes' AQUÍ
 
     protected $table = 'medicamentos_recetados';
     protected $primaryKey = 'id_medicamento_recetado';

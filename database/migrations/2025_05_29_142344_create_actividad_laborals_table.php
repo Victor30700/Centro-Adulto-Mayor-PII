@@ -23,6 +23,11 @@ return new class extends Migration
             $table->unsignedBigInteger('id_adulto'); // Foreign key
             $table->timestamps();
 
+           // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
+           
+
             // Definición de la clave foránea
             $table->foreign('id_adulto')
                 ->references('id_adulto')

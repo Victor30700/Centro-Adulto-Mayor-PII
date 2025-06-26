@@ -26,6 +26,10 @@ use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\VerticalJc;
 use PhpOffice\PhpWord\SimpleType\TblWidth; // Aquí está la clase que contiene la constante PCT
+use PhpOffice\PhpWord\Style\Table as TblStyle;
+use PhpOffice\PhpWord\Shared\Converter;
+use PhpOffice\PhpWord\Style\Cell; // Para estilos de celda
+
 
 class ReporteFisioKineController extends Controller
 {
@@ -105,196 +109,273 @@ class ReporteFisioKineController extends Controller
             return back()->with('error', 'Error al eliminar la Ficha de Fisioterapia: ' . $e->getMessage());
         }
     }
-   public function exportarFichaFisioWordIndividual(int $cod_fisio)
-    {
-        try {
-            // Cargar la ficha de fisioterapia con sus relaciones necesarias
-            $fichaFisio = Fisioterapia::with('adulto.persona', 'historiaClinica', 'usuario.persona')->findOrFail($cod_fisio);
-            
-            // Acceso simplificado a los datos relacionados
-            $adulto = $fichaFisio->adulto;
-            $persona = optional($adulto)->persona;
-            $historiaClinica = $fichaFisio->historiaClinica; 
-            $usuarioRegistro = optional($fichaFisio->usuario)->persona;
+    public function exportarFichaFisioWordIndividual(int $cod_fisio)
+{
+    try {
+        // Cargar la ficha de fisioterapia con sus relaciones necesarias
+        $fichaFisio = Fisioterapia::with('adulto.persona', 'historiaClinica', 'usuario.persona')->findOrFail($cod_fisio);
+        
+        // Acceso simplificado a los datos relacionados
+        $adulto = $fichaFisio->adulto;
+        $persona = optional($adulto)->persona;
+        $historiaClinica = $fichaFisio->historiaClinica; 
+        $usuarioRegistro = optional($fichaFisio->usuario)->persona;
 
-            $phpWord = new PhpWord();
-            $section = $phpWord->addSection();
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection(['marginLeft' => 720, 'marginRight' => 720, 'marginTop' => 720, 'marginBottom' => 720]);
 
-            // --- Estilos de fuente ---
-            $phpWord->addFontStyle('headerStyle', ['name' => 'Arial', 'size' => 10, 'bold' => true]);
-            $phpWord->addFontStyle('mainTitleStyle', ['name' => 'Arial', 'size' => 14, 'bold' => true]);
-            $phpWord->addFontStyle('sectionTitleStyle', ['name' => 'Arial', 'size' => 11, 'bold' => true, 'underline' => 'single']);
-            $phpWord->addFontStyle('labelStyle', ['name' => 'Arial', 'size' => 10, 'bold' => true]);
-            $phpWord->addFontStyle('valueStyle', ['name' => 'Arial', 'size' => 10]);
-            $phpWord->addFontStyle('checkboxStyle', ['name' => 'Arial', 'size' => 10]); 
-            $phpWord->addFontStyle('signatureStyle', ['name' => 'Arial', 'size' => 10, 'bold' => true]);
+        // --- Estilos de fuente ---
+        $phpWord->addFontStyle('headerStyle', ['name' => 'Calibri', 'size' => 10, 'bold' => true, 'color' => '1A3C34']);
+        $phpWord->addFontStyle('cityHeaderStyle', ['name' => 'Calibri', 'size' => 12, 'bold' => true, 'color' => '1A3C34']);
+        $phpWord->addFontStyle('mainTitleStyle', ['name' => 'Calibri', 'size' => 16, 'bold' => true, 'color' => '1A3C34']);
+        $phpWord->addFontStyle('sectionTitleStyle', ['name' => 'Calibri', 'size' => 11, 'bold' => true, 'color' => '1A3C34', 'underline' => 'single']);
+        $phpWord->addFontStyle('labelStyle', ['name' => 'Calibri', 'size' => 10, 'bold' => true, 'color' => '1A3C34']);
+        $phpWord->addFontStyle('valueStyle', ['name' => 'Calibri', 'size' => 10, 'color' => '333333']);
+        $phpWord->addFontStyle('checkboxStyle', ['name' => 'Calibri', 'size' => 10, 'color' => '333333']);
+        $phpWord->addFontStyle('signatureStyle', ['name' => 'Calibri', 'size' => 10, 'bold' => true, 'color' => '1A3C34']);
+        $phpWord->addFontStyle('normalText', ['name' => 'Calibri', 'size' => 10, 'color' => '333333']);
+        $phpWord->addFontStyle('footerStyle', ['name' => 'Calibri', 'size' => 9, 'color' => '666666']);
 
-            // --- Estilos de párrafo ---
-            $phpWord->addParagraphStyle('P_Center', ['align' => 'center', 'spaceAfter' => 0, 'spaceBefore' => 0]);
-            $phpWord->addParagraphStyle('P_Left', ['align' => 'left', 'spaceAfter' => 0, 'spaceBefore' => 0]);
-            $phpWord->addParagraphStyle('P_Right', ['align' => 'right', 'spaceAfter' => 0, 'spaceBefore' => 0]);
-            $phpWord->addParagraphStyle('P_Indent', ['indentation' => ['left' => 360], 'spaceAfter' => 0, 'spaceBefore' => 0]); 
-            $phpWord->addParagraphStyle('P_LineSpace10', ['spaceAfter' => 100, 'spaceBefore' => 0]); 
-            $phpWord->addParagraphStyle('P_LineSpace20', ['spaceAfter' => 240, 'spaceBefore' => 0]); 
+        // --- Estilos de párrafo ---
+        $phpWord->addParagraphStyle('P_Center', ['alignment' => 'center', 'spaceAfter' => 100, 'spaceBefore' => 100]);
+        $phpWord->addParagraphStyle('P_Left', ['alignment' => 'left', 'spaceAfter' => 80, 'spaceBefore' => 80]);
+        $phpWord->addParagraphStyle('P_Right', ['alignment' => 'right', 'spaceAfter' => 80, 'spaceBefore' => 80]);
+        $phpWord->addParagraphStyle('P_Indent', ['indentation' => ['left' => 400], 'spaceAfter' => 80, 'spaceBefore' => 80]);
+        $phpWord->addParagraphStyle('P_NoSpace', ['spaceAfter' => 0, 'spaceBefore' => 0]);
+        $phpWord->addParagraphStyle('P_SectionSpace', ['spaceAfter' => 300, 'spaceBefore' => 200]);
 
+        // --- Estilos de tabla y celda ---
+        $tableStyle = [
+            'borderColor' => 'B0B0B0',
+            'borderSize' => 6,
+            'cellMargin' => 100,
+            'alignment' => 'center',
+            'width' => 10000,
+            'unit' => TblWidth::TWIP,
+        ];
+        $phpWord->addTableStyle('mainTableStyle', $tableStyle);
 
-            // --- Encabezado del Documento ---
-            $section->addText('DEL ADULTO MAYOR EN EL CTAM ' . Carbon::now()->year, 'headerStyle', 'P_Center');
-            $section->addTextBreak(1); 
-            $section->addText('FICHA DE INGRESO DEL ADULTO MAYOR EN EL CTAM', 'mainTitleStyle', 'P_Center');
-            $section->addTextBreak(2); 
+        $sectionHeaderCellStyle = [
+            'valign' => VerticalJc::CENTER,
+            'bgColor' => 'F5F6F5',
+            'borderBottomSize' => 12,
+            'borderBottomColor' => '1A3C34',
+        ];
+        $phpWord->addTableStyle('sectionHeaderTableStyle', [
+            'borderColor' => 'B0B0B0',
+            'borderSize' => 6,
+            'cellMargin' => 100,
+            'alignment' => 'center',
+            'width' => 10000,
+            'unit' => TblWidth::TWIP,
+        ]);
 
+        $cellStyleNoBorder = [
+            'borderSize' => 0,
+            'cellMargin' => 80,
+            'valign' => VerticalJc::CENTER,
+        ];
+        $phpWord->addTableStyle('noBorderTableStyle', [
+            'borderSize' => 0,
+            'cellMargin' => 80,
+            'alignment' => 'left',
+            'width' => 10000,
+            'unit' => TblWidth::TWIP,
+        ]);
 
-            // --- DATOS PERSONALES ---
-            $section->addText('DATOS PERSONALES', 'sectionTitleStyle', 'P_Left');
+        // --- Encabezado del Documento ---
+        $header = $section->addHeader();
+        $headerTable = $header->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
 
-            // Crear tabla para estructurar los datos personales sin bordes visibles
-            // Ajustamos el ancho para que la tabla sea casi de página completa con TWIP.
-            // Un ancho de página estándar es ~11906 TWIPs. Usaremos 9000 TWIPs para el contenido,
-            // y distribuiremos el resto en las columnas.
-            $tableStylePersonal = [
-                'borderColor' => 'FFFFFF', 
-                'borderSize' => 0,
-                'cellMargin' => 0,
-                'alignment' => 'left',
-                'width' => 9000, // Ancho total de la tabla en TWIPs. Ajusta si sigue saliendo.
-                'unit' => TblWidth::TWIP, 
-            ];
-            $tablePersonal = $section->addTable($tableStylePersonal);
+        $headerTable->addRow();
+        $cellTitles = $headerTable->addCell(10000, ['valign' => VerticalJc::CENTER]);
+        $cellTitles->addText('ALCALDÍA DE TARIJA', 'cityHeaderStyle', 'P_Center');
+        $cellTitles->addText('CENTRO DE ATENCIÓN MUNICIPAL DEL ADULTO MAYOR ' . Carbon::now()->year, 'headerStyle', 'P_Center');
+        $header->addTextBreak(1);
 
-            // Fila 1: Nombre Completo
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('NOMBRE COMPLETO DEL ADULTO MAYOR', 'labelStyle', 'P_Left'); // Ancho para la etiqueta
-            $tablePersonal->addCell(6000)->addText((optional($persona)->nombres ?? '') . ' ' . (optional($persona)->primer_apellido ?? '') . ' ' . (optional($persona)->segundo_apellido ?? ''), 'valueStyle', 'P_Left'); // Ancho para el valor
-            $tablePersonal->addCell(500)->addText(',', 'valueStyle', 'P_Left'); // Pequeño ancho para la coma
+        // --- Pie de Página ---
+        $footer = $section->addFooter();
+        $footerTable = $footer->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
+        $footerTable->addRow();
+        $footerTable->addCell(10000)->addPreserveText('Página {PAGE} de {NUMPAGES}', 'footerStyle', 'P_Center');
 
-            // Fila 2: Fecha de Nacimiento, Edad
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('FECHA DE NACIMIENTO', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(2500)->addText((optional($persona)->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->format('d/m/Y') : ''), 'valueStyle', 'P_Left');
-            $tablePersonal->addCell(1000)->addText('EDAD', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(2500)->addText((optional($persona)->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : ''), 'valueStyle', 'P_Left');
-            $tablePersonal->addCell(500)->addText(',', 'valueStyle', 'P_Left');
+        // --- Contenido del Documento ---
+        $section->addTextBreak(1);
+        $section->addText('FICHA DE INGRESO DEL ADULTO MAYOR EN EL CTAM', 'mainTitleStyle', 'P_Center');
+        $section->addTextBreak(2);
 
-            // Fila 3: Número de Documento de Identidad, Teléfono
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('NÚMERO DE DOCUMENTO DE IDENTIDAD', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(2500)->addText(optional($persona)->ci ?? '', 'valueStyle', 'P_Left');
-            $tablePersonal->addCell(1000)->addText('NÚMERO DE TELÉFONO', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(2500)->addText(optional($persona)->celular ?? 'N/A', 'valueStyle', 'P_Left');
-            $tablePersonal->addCell(500)->addText(',', 'valueStyle', 'P_Left');
+        // --- I. DATOS PERSONALES DEL ADULTO MAYOR ---
+        $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
+        $sectionHeaderTable->addRow();
+        $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
+            ->addText('I. DATOS PERSONALES DEL ADULTO MAYOR', 'sectionTitleStyle', 'P_Left');
+        $section->addTextBreak(1);
 
-            // Fila 4: Dirección de Domicilio
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('DIRECCIÓN DE DOMICILIO', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(6000)->addText((optional($persona)->zona_comunidad ?? 'N/A') . ', ' . (optional($persona)->direccion ?? 'N/A'), 'valueStyle', 'P_Left');
-            $tablePersonal->addCell(500)->addText(',', 'valueStyle', 'P_Left');
+        $tablePersonal = $section->addTable('noBorderTableStyle');
+        $addRow = function ($table, $label, $value, $labelWidth = 3500, $valueWidth = 6500) use ($cellStyleNoBorder) {
+            $table->addRow(400);
+            $table->addCell($labelWidth, $cellStyleNoBorder)->addText(mb_strtoupper($label), 'labelStyle', 'P_NoSpace');
+            $table->addCell($valueWidth, $cellStyleNoBorder)->addText(mb_strtoupper($value), 'valueStyle', 'P_NoSpace');
+        };
 
-            // Fila 5: Con Quien Vive
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('CON QUIEN VIVE', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(6500)->addText(optional($adulto)->con_quien_vive ?? 'N/A', 'valueStyle', 'P_Left');
+        $addRow($tablePersonal, 'NOMBRE COMPLETO', (optional($persona)->nombres ?? 'N/A') . ' ' . (optional($persona)->primer_apellido ?? 'N/A') . ' ' . (optional($persona)->segundo_apellido ?? ''));
+        
+        $tablePersonal->addRow(400);
+        $tablePersonal->addCell(3500, $cellStyleNoBorder)->addText('FECHA DE NACIMIENTO', 'labelStyle', 'P_NoSpace');
+        $tablePersonal->addCell(2500, $cellStyleNoBorder)->addText((optional($persona)->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->format('d/m/Y') : 'N/A'), 'valueStyle', 'P_NoSpace');
+        $tablePersonal->addCell(1500, $cellStyleNoBorder)->addText('EDAD', 'labelStyle', 'P_NoSpace');
+        $tablePersonal->addCell(2000, $cellStyleNoBorder)->addText((optional($persona)->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : 'N/A'), 'valueStyle', 'P_NoSpace');
 
-            // Fila 6: Estado Civil
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('ESTADO CIVIL', 'labelStyle', 'P_Left');
-            $estadoCivil = optional($adulto)->estado_civil;
-            $tablePersonal->addCell(1800)->addText('(' . ($estadoCivil == 'Casado/a' ? 'X' : ' ') . ') Casado/a', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(1800)->addText('(' . ($estadoCivil == 'Soltero/a' ? 'X' : ' ') . ') Soltero/a', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(1800)->addText('(' . ($estadoCivil == 'Viudo/a' ? 'X' : ' ') . ') Viudo/a', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(1800)->addText('(' . ($estadoCivil == 'Divorciado/a' ? 'X' : ' ') . ') Divorciado/a', 'checkboxStyle', 'P_Left');
+        $tablePersonal->addRow(400);
+        $tablePersonal->addCell(3500, $cellStyleNoBorder)->addText('NÚMERO DE CÉDULA', 'labelStyle', 'P_NoSpace');
+        $tablePersonal->addCell(2500, $cellStyleNoBorder)->addText(mb_strtoupper(optional($persona)->ci ?? 'N/A'), 'valueStyle', 'P_NoSpace');
+        $tablePersonal->addCell(1500, $cellStyleNoBorder)->addText('TELÉFONO', 'labelStyle', 'P_NoSpace');
+        $tablePersonal->addCell(2000, $cellStyleNoBorder)->addText(mb_strtoupper(optional($persona)->telefono ?? 'N/A'), 'valueStyle', 'P_NoSpace');
 
-            // Fila 7: Grado de Instrucción
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('GRADO DE INSTRUCCIÓN', 'labelStyle', 'P_Left');
-            $gradoInstruccion = optional($adulto)->grado_instruccion;
-            $tablePersonal->addCell(2000)->addText('(' . ($gradoInstruccion == 'Sin instrucción' ? 'X' : ' ') . ') Sin instrucción', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(1500)->addText('(' . ($gradoInstruccion == 'Primaria' ? 'X' : ' ') . ') Primaria', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(2000)->addText('(' . ($gradoInstruccion == 'Secundaria' ? 'X' : ' ') . ') Secundaria', 'checkboxStyle', 'P_Left');
-            $tablePersonal->addCell(2000)->addText('(' . ($gradoInstruccion == 'Superior' ? 'X' : ' ') . ') Superior', 'checkboxStyle', 'P_Left');
+        $addRow($tablePersonal, 'DOMICILIO', (optional($persona)->zona_comunidad ?? 'N/A') . ', ' . (optional($persona)->domicilio ?? 'N/A'));
+        $addRow($tablePersonal, 'CON QUIÉN VIVE', optional($adulto)->vive_con ?? 'N/A');
+        $addRow($tablePersonal, 'ESTADO CIVIL', optional($persona)->estado_civil ?? 'N/A');
+        $addRow($tablePersonal, 'GRADO DE INSTRUCCIÓN', optional($historiaClinica)->grado_instruccion ?? 'N/A');
+        $addRow($tablePersonal, 'OCUPACIÓN', optional($historiaClinica)->ocupacion ?? 'N/A');
+        $addRow($tablePersonal, 'NÚMEROS DE EMERGENCIA', optional($fichaFisio)->num_emergencia ?? 'N/A');
+        $section->addTextBreak(2);
 
-            // Fila 8: Ocupación Actual
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('OCUPACIÓN ACTUAL', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(6500)->addText(optional($adulto)->ocupacion_actual ?? 'N/A', 'valueStyle', 'P_Left');
+        // --- II. SITUACIÓN DE SALUD ---
+        $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
+        $sectionHeaderTable->addRow();
+        $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
+            ->addText('II. SITUACIÓN DE SALUD', 'sectionTitleStyle', 'P_Left');
+        $section->addTextBreak(1);
 
-            // Fila 9: Números de Emergencia
-            $tablePersonal->addRow();
-            $tablePersonal->addCell(3000)->addText('NÚMEROS DE EMERGENCIA', 'labelStyle', 'P_Left');
-            $tablePersonal->addCell(6500)->addText(optional($adulto)->numero_emergencia ?? 'N/A', 'valueStyle', 'P_Left');
-            $section->addTextBreak(2);
+        $tableSalud = $section->addTable('noBorderTableStyle');
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('ENFERMEDADES', 'labelStyle', 'P_NoSpace');
+        $enfermedadesActuales = mb_strtoupper(optional($fichaFisio)->enfermedades_actuales ?? '');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'HIPERTENSIÓN ARTERIAL') !== false ? 'X' : ' ') . ') HIPERTENSIÓN ARTERIAL', 'checkboxStyle', 'P_Indent');
 
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'DIABETES') !== false ? 'X' : ' ') . ') DIABETES', 'checkboxStyle', 'P_Indent');
 
-            // --- SITUACIÓN DE SALUD ---
-            $section->addText('SITUACIÓN DE SALUD', 'sectionTitleStyle', 'P_Left');
-            $section->addTextBreak(1); 
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'ARTROSIS') !== false ? 'X' : ' ') . ') ARTROSIS', 'checkboxStyle', 'P_Indent');
 
-            $section->addText('ENFERMEDADES ACTUALES', 'labelStyle', 'P_Left');
-            $section->addText('(' . ' ' . ') Hipertensión arterial', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') Diabetes.', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') Artrosis.', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') Osteoporosis.', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') Parkinson.', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') No refiere.', 'checkboxStyle', 'P_Indent');
-            $section->addText('Otras: ' . ($fichaFisio->diagnostico ?? $fichaFisio->observaciones ?? 'N/A'), 'valueStyle', 'P_Indent');
-            $section->addTextBreak(1); 
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'OSTEOPOROSIS') !== false ? 'X' : ' ') . ') OSTEOPOROSIS', 'checkboxStyle', 'P_Indent');
 
-            $section->addText('ALERGIAS', 'labelStyle', 'P_Left');
-            $section->addText('(' . ' ' . ') Medicamentos. Indicar: ' . ($fichaFisio->observaciones ?? 'N/A'), 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') Alimentos. Indicar: ' . ($fichaFisio->observaciones ?? 'N/A'), 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . ' ' . ') No refiere', 'checkboxStyle', 'P_Indent');
-            $section->addTextBreak(2);
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'PARKINSON') !== false ? 'X' : ' ') . ') PARKINSON', 'checkboxStyle', 'P_Indent');
 
-            // --- PLAN DE PARTICIPACIÓN INDIVIDUAL. O GRUPAL ---
-            $section->addText('PLAN DE PARTICIPACIÓN INDIVIDUAL. O GRUPAL', 'sectionTitleStyle', 'P_Left');
-            $section->addTextBreak(1);
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'NO REFIERE') !== false ? 'X' : ' ') . ') NO REFIERE', 'checkboxStyle', 'P_Indent');
 
-            $section->addText('ATENCIÓN FISIOTERAPIA KINESIOLOGÍA', 'labelStyle', 'P_Left');
-            $section->addText('FECHA DE PROGRAMACIÓN: ' . (optional($fichaFisio->fecha_programacion) ? Carbon::parse($fichaFisio->fecha_programacion)->format('d/m/Y') : 'N/A'), 'valueStyle', 'P_Left');
-            $section->addText('MOTIVO DE CONSULTA: ' . ($fichaFisio->motivo_consulta ?? 'N/A'), 'valueStyle', 'P_Left');
-            $section->addText('SOLICITUD ATENCIÓN: ' . ($fichaFisio->solicitud_atencion ?? 'N/A'), 'valueStyle', 'P_Left'); 
-            $section->addTextBreak(1);
+        $tableSalud->addRow(400);
+        $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('OTRAS: ' . (empty($enfermedadesActuales) ? 'N/A' : $enfermedadesActuales), 'valueStyle', 'P_Indent');
+        $section->addTextBreak(1);
 
-            $section->addText('EQUIPOS', 'labelStyle', 'P_Left');
-            $equiposFisio = strval($fichaFisio->equipos);
+        $tableAlergias = $section->addTable('noBorderTableStyle');
+        $tableAlergias->addRow(400);
+        $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('ALERGIAS', 'labelStyle', 'P_NoSpace');
+        $alergias = mb_strtoupper(optional($fichaFisio)->alergias ?? '');
+        $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'MEDICAMENTOS') !== false ? 'X' : ' ') . ') MEDICAMENTOS: ' . (mb_strpos($alergias, 'MEDICAMENTOS') !== false ? mb_strtoupper($fichaFisio->alergias) : 'N/A'), 'checkboxStyle', 'P_Indent');
 
-            $section->addText('(' . (mb_strpos(mb_strtoupper($equiposFisio), 'ELECTRO ESTIMULADOR') !== false ? 'X' : ' ') . ') ELECTRO ESTIMULADOR', 'checkboxStyle', 'P_Indent');
-            $section->addText('(' . (mb_strpos(mb_strtoupper($equiposFisio), 'ULTRASONIDO') !== false ? 'X' : ' ') . ') ULTRASONIDO', 'checkboxStyle', 'P_Indent');
-            $section->addText('OTROS: ' . (!empty($equiposFisio) ? $equiposFisio : 'N/A'), 'valueStyle', 'P_Indent');
-            $section->addTextBreak(2);
+        $tableAlergias->addRow(400);
+        $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'ALIMENTOS') !== false ? 'X' : ' ') . ') ALIMENTOS: ' . (mb_strpos($alergias, 'ALIMENTOS') !== false ? mb_strtoupper($fichaFisio->alergias) : 'N/A'), 'checkboxStyle', 'P_Indent');
 
+        $tableAlergias->addRow(400);
+        $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'NO REFIERE') !== false ? 'X' : ' ') . ') NO REFIERE', 'checkboxStyle', 'P_Indent');
 
-            // --- Firmas al final ---
-            $section->addTextBreak(3);
-            $section->addText('____________________________', 'NormalText', 'P_Center');
-            $section->addText('FIRMA FISIOTERAPEUTA', 'signatureStyle', 'P_Center');
-            $section->addTextBreak(1);
-            $section->addText('____________________________', 'NormalText', 'P_Center');
-            $section->addText('FIRMA ENCARGAD@ OF. ADULTO MAYOR', 'signatureStyle', 'P_Center');
-
-            // Preparar el archivo para la descarga
-            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-
-            $nombreAdulto = (optional($persona)->nombres ?? '') . '_' . (optional($persona)->primer_apellido ?? '');
-            $fileName = 'ficha_fisioterapia_' . $fichaFisio->cod_fisio . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd') . '.docx';
-            $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName); 
-            $fileName = substr($fileName, 0, 200); 
-
-            $response = new StreamedResponse(function() use ($objWriter) {
-                $objWriter->save('php://output');
-            });
-
-            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
-            $response->headers->set('Cache-Control', 'max-age=0');
-
-            return $response;
-
-        } catch (\Exception $e) {
-            Log::error('Error al generar Word de la Ficha de Fisioterapia individual (cod_fisio: ' . $cod_fisio . '): ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'Ocurrió un error al generar el Word de la Ficha de Fisioterapia: ' . $e->getMessage());
+        $otherAlergias = '';
+        if (!empty($fichaFisio->alergias)) {
+            if (mb_strpos($alergias, 'MEDICAMENTOS') === false && mb_strpos($alergias, 'ALIMENTOS') === false && mb_strpos($alergias, 'NO REFIERE') === false) {
+                $otherAlergias = $fichaFisio->alergias;
+            }
         }
+        $tableAlergias->addRow(400);
+        $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('OTRAS: ' . (empty($otherAlergias) ? 'N/A' : mb_strtoupper($otherAlergias)), 'valueStyle', 'P_Indent');
+        $section->addTextBreak(2);
+
+        // --- III. PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL ---
+        $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
+        $sectionHeaderTable->addRow();
+        $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
+            ->addText('III. PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL (FISIOTERAPIA)', 'sectionTitleStyle', 'P_Left');
+        $section->addTextBreak(1);
+
+        $tablePlan = $section->addTable('noBorderTableStyle');
+        $addRow($tablePlan, 'ATENCIÓN FISIOTERAPIA', '');
+        $addRow($tablePlan, 'FECHA DE PROGRAMACIÓN', (optional($fichaFisio->fecha_programacion) ? Carbon::parse($fichaFisio->fecha_programacion)->format('d/m/Y') : 'N/A'));
+        $addRow($tablePlan, 'MOTIVO DE CONSULTA', mb_strtoupper($fichaFisio->motivo_consulta ?? 'N/A'));
+        $addRow($tablePlan, 'SOLICITUD ATENCIÓN', mb_strtoupper($fichaFisio->solicitud_atencion ?? 'N/A'));
+        $section->addTextBreak(1);
+
+        $tableEquipos = $section->addTable('noBorderTableStyle');
+        $tableEquipos->addRow(400);
+        $tableEquipos->addCell(3500, $cellStyleNoBorder)->addText('EQUIPOS', 'labelStyle', 'P_NoSpace');
+        $equiposFisio = mb_strtoupper(optional($fichaFisio)->equipos ?? '');
+        $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($equiposFisio, 'ELECTRO ESTIMULADOR') !== false ? 'X' : ' ') . ') ELECTRO ESTIMULADOR', 'checkboxStyle', 'P_Indent');
+
+        $tableEquipos->addRow(400);
+        $tableEquipos->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($equiposFisio, 'ULTRASONIDO') !== false ? 'X' : ' ') . ') ULTRASONIDO', 'checkboxStyle', 'P_Indent');
+
+        $otrosEquipos = [];
+        $equiposArray = array_map('trim', explode(',', optional($fichaFisio)->equipos ?? ''));
+        foreach ($equiposArray as $equipo) {
+            $equipoUpper = mb_strtoupper($equipo);
+            if (!empty($equipo) && $equipoUpper !== 'ELECTRO ESTIMULADOR' && $equipoUpper !== 'ULTRASONIDO') {
+                $otrosEquipos[] = $equipo;
+            }
+        }
+        $tableEquipos->addRow(400);
+        $tableEquipos->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
+        $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('OTROS: ' . (!empty($otrosEquipos) ? implode(', ', $otrosEquipos) : 'N/A'), 'valueStyle', 'P_Indent');
+        $section->addTextBreak(3);
+
+        // --- Firmas ---
+        $signatureTable = $section->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
+        $signatureTable->addRow();
+        $signatureTable->addCell(5000, $cellStyleNoBorder)->addText('____________________________', 'normalText', 'P_Center');
+        $signatureTable->addCell(5000, $cellStyleNoBorder)->addText('____________________________', 'normalText', 'P_Center');
+        $signatureTable->addRow();
+        $signatureTable->addCell(5000, $cellStyleNoBorder)->addText('FIRMA FISIOTERAPEUTA', 'signatureStyle', 'P_Center');
+        $signatureTable->addCell(5000, $cellStyleNoBorder)->addText('FIRMA ENCARGADO OF. ADULTO MAYOR', 'signatureStyle', 'P_Center');
+        $section->addTextBreak(2);
+
+        $section->addText('REGISTRADO POR: ' . mb_strtoupper(optional($usuarioRegistro)->nombres ?? 'N/A') . ' ' . mb_strtoupper(optional($usuarioRegistro)->primer_apellido ?? 'N/A'), 'normalText', 'P_Center');
+        $section->addText('FECHA DE REGISTRO: ' . (optional($fichaFisio)->created_at ? Carbon::parse($fichaFisio->created_at)->format('d/m/Y H:i') : 'N/A'), 'normalText', 'P_Center');
+
+        // Prepare the file for download
+        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+
+        $nombreAdulto = mb_strtoupper((optional($persona)->nombres ?? '') . '_' . (optional($persona)->primer_apellido ?? ''));
+        $fileName = 'FICHA_FISIOTERAPIA_' . $fichaFisio->cod_fisio . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd') . '.docx';
+        $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
+        $fileName = substr($fileName, 0, 200);
+
+        $response = new StreamedResponse(function() use ($objWriter) {
+            $objWriter->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+        $response->headers->set('Cache-Control', 'max-age=0');
+
+        return $response;
+
+    } catch (\Exception $e) {
+        Log::error('Error al generar Word de la Ficha de Fisioterapia individual (cod_fisio: ' . $cod_fisio . '): ' . $e->getMessage(), ['exception' => $e]);
+        return back()->with('error', 'Ocurrió un error al generar el Word de la Fisioterapia: ' . $e->getMessage());
     }
+}
 
     // ###########################################################################################################################
     // REPORTES KINESIOLOGIA

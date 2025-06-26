@@ -21,6 +21,9 @@ return new class extends Migration
             // KK
             $table->enum('sexo', ['M', 'F']);
             $table->timestamps();
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ---
         });
     }
 

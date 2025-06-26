@@ -27,6 +27,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_seg');
             $table->foreign('id_seg')->references('id_seg')->on('seguimiento_caso')->onDelete('cascade');
             $table->timestamps();
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ---
         });
     }
 

@@ -33,6 +33,9 @@ class CreateHistoriaClinicaTable extends Migration
             $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');
 
             $table->timestamps(); // created_at and updated_at
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------
         });
     }
 

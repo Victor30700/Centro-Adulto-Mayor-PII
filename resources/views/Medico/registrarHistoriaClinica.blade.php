@@ -214,11 +214,7 @@
 </head>
 
 <body>
-<div class="page">
-    <div class="page-main">
-        <div class="main-content app-content mt-0">
-            <div class="side-app">
-                <div class="main-container container-fluid">
+
                     <h1 class="page-title">{{ $modoEdicion ? 'Editar' : 'Registrar' }} Historia Clínica para: {{ optional($adulto->persona)->nombres }} {{ optional($adulto->persona)->primer_apellido }} {{ optional($adulto->persona)->segundo_apellido }}</h1>
 
                     @if(session('success'))
@@ -325,11 +321,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 @endsection
 

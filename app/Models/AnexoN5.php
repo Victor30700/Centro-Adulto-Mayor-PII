@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory; // Asegúrate de incluirlo si lo usas
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. AÑADIR ESTA LÍNEA
 
 class AnexoN5 extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // <-- 2. AÑADIR 'SoftDeletes' AQUÍ
     protected $table = 'anexo_n5';
     protected $primaryKey = 'nro_an5'; // Clave primaria personalizada
     

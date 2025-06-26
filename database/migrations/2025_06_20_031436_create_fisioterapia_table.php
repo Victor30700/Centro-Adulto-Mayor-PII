@@ -25,7 +25,10 @@ return new class extends Migration
             
             // Timestamps
             $table->timestamps();
-            
+
+             // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ----------------------------------------------------
             // Definición de claves foráneas
             $table->unsignedBigInteger('id_adulto'); // Clave foránea para AdultoMayor
             $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');

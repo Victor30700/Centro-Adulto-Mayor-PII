@@ -20,11 +20,11 @@
                     <td>{{ $adulto->edad }} años</td>
                     <td>
                         @if($adulto->sexo == 'M')
-                            <span class="badge bg-primary-light">Masculino</span>
+                            <span class="badge bg-primary">Masculino</span>
                         @elseif($adulto->sexo == 'F')
-                            <span class="badge bg-pink-light">Femenino</span>
+                            <span class="badge bg-pink">Femenino</span>
                         @else
-                            <span class="badge bg-warning-light">Otro</span>
+                            <span class="badge bg-warning">Otro</span>
                         @endif
                     </td>
                     <td>{{ $adulto->telefono }}</td>

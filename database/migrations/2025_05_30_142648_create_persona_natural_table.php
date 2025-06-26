@@ -26,7 +26,10 @@ return new class extends Migration
             $table->string('direccion_de_trabajo', 255)->nullable();
             $table->string('ocupacion', 100)->nullable();
             $table->timestamps(); // ¡Asegúrate de que esta línea esté aquí si usas timestamps!
-
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
+           
             // La clave foránea también debe permitir NULLs si la columna es nullable
             $table->foreign('id_encargado')->references('id_encargado')->on('encargado')->onDelete('cascade');
         });

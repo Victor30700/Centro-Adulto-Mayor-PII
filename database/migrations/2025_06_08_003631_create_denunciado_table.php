@@ -20,6 +20,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_adulto');
             $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');
             $table->timestamps();
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ---
         });
     }
 

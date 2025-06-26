@@ -24,6 +24,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_adulto');
             $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');
             $table->timestamps(); // ¡AGREGADO: columnas created_at y updated_at!
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // ---
         });
     }
 

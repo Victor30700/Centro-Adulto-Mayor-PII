@@ -1,29 +1,17 @@
-indexRepKine:
 @extends('layouts.main')
 
-{{-- Contenido de la cabecera (HEAD) --}}
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Módulo Médico / Reporte de Fichas de Kinesiología</title>
-    
-    {{-- jQuery (si es necesario para otras librerías como DataTables) --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    {{-- Hojas de estilo --}}
+{{-- Define el título de la página --}}
+@section('title', 'Módulo Médico / Reporte de Fichas de Kinesiología')
+
+{{-- Estilos específicos de la vista --}}
+@push('styles')
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/Medico/indexFisioKine.css') }}"> 
-    
-    {{-- Feather Icons para los íconos --}}
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    
     {{-- SweetAlert2 CSS para alertas y confirmaciones --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-</head>
+@endpush
 
-{{-- Contenido principal de la vista (BODY) --}}
 @section('content')
-
                     <div class="page-header">
                         <h1 class="page-title">Módulo Médico / Reporte de Fichas de Kinesiología</h1>
                         <div>
@@ -33,9 +21,6 @@ indexRepKine:
                             </ol>
                         </div>
                     </div>
-
-                    {{-- Las alertas de sesión se manejarán con JS a través de SweetAlert2. --}}
-                    {{-- Por lo tanto, los bloques @if(session('success')) y @if(session('error')) se eliminan del HTML. --}}
 
                     <!-- Tarjetas de estadísticas -->
                     <div class="row">
@@ -62,13 +47,17 @@ indexRepKine:
                     <div class="mb-3 d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-2">
                             {{-- Botón para ir al Reporte de Fichas de Fisioterapia --}}
-                            {{-- Ruta: responsable.fisioterapia.reportefisio.index --}}
+                            {{-- Ruta CORRECTA: responsable.fisioterapia.reportefisio.index --}}
                             <a href="{{ route('responsable.fisioterapia.reportefisio.index') }}" class="btn btn-info">
                                 <i class="fe fe-list"></i> Ver Reporte de Fichas Fisioterapia
                             </a>
+                            {{-- Botón para ir al Reporte de Fichas de Kinesiología --}}
+                            {{-- Ruta CORRECTA: responsable.kinesiologia.reportekine.index (ya estás aquí) --}}
+                            <a href="{{ route('responsable.kinesiologia.reportekine.index') }}" class="btn btn-primary">
+                                <i class="fe fe-file-text"></i> Ver Reporte de Fichas Kinesiología
+                            </a>
                         </div>
                         {{-- Botón para Exportar a Excel (General) --}}
-                        {{-- La lógica de exportación se manejará con JavaScript al hacer clic --}}
                         <button type="button" class="btn btn-success btn-sm" id="exportarExcelGeneralBtn">
                             <i class="fe fe-download"></i> Exportar a Excel
                         </button>
@@ -83,8 +72,7 @@ indexRepKine:
                                 </div>
                                 <div class="card-body">
                                     {{-- Formulario de Filtros y Búsqueda para fichas --}}
-                                    {{-- La acción del formulario apunta a la ruta de índice de Kinesiología --}}
-                                    {{-- Ruta: responsable.kinesiologia.reportekine.index --}}
+                                    {{-- Ruta CORRECTA: responsable.kinesiologia.reportekine.index --}}
                                     <form id="filterFormFichasKine" action="{{ route('responsable.kinesiologia.reportekine.index') }}" method="GET" class="form-filter mb-4">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-6">
@@ -92,7 +80,7 @@ indexRepKine:
                                                 <div class="input-group">
                                                     <input type="text" class="form-control" id="search_fichas_kine" name="search" placeholder="Buscar por CI o nombres del adulto mayor..." value="{{ $search ?? '' }}">
                                                     <button type="submit" class="btn btn-primary"><i class="fe fe-search"></i> Buscar</button>
-                                                    {{-- Botón Restablecer --}}
+                                                    {{-- Ruta CORRECTA: responsable.kinesiologia.reportekine.index --}}
                                                     <a href="{{ route('responsable.kinesiologia.reportekine.index') }}" class="btn btn-outline-secondary"><i class="fe fe-x"></i> Restablecer</a>
                                                 </div>
                                                 <small class="text-muted">Busca por CI o nombres del adulto mayor.</small>
@@ -143,19 +131,14 @@ indexRepKine:
                                                                 echo empty($turns) ? 'N/A' : implode(', ', $turns);
                                                             @endphp
                                                         </td>
-                                                        <td>{{ optional(optional($fichaKine->usuario)->persona)->nombres }}</td>
+                                                        <td>{{ optional(optional($fichaKine->usuario)->persona)->nombres }} {{ optional(optional($fichaKine->usuario)->persona)->primer_apellido }}</td>
                                                         <td>
                                                             <div class="btn-group" role="group">
-                                                                {{-- Botón para Ver Detalles --}}
-                                                                {{-- Ruta: responsable.kinesiologia.reportekine.show --}}
-                                                                <a href="{{ route('responsable.kinesiologia.reportekine.show', ['cod_kine' => $fichaKine->cod_kine]) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Ver Detalles">
-                                                                    <i class="fe fe-eye"></i>
-                                                                </a>
                                                                 {{-- Botón para Editar Ficha (si se desea permitir editar desde el reporte, añadir la ruta aquí) --}}
                                                                 {{-- Ejemplo: <a href="{{ route('responsable.kinesiologia.reportekine.edit', ['cod_kine' => $fichaKine->cod_kine]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Editar Ficha"><i class="fe fe-edit"></i></a> --}}
 
                                                                 {{-- Botón para Eliminar Ficha (con SweetAlert2) --}}
-                                                                {{-- Ruta: responsable.kinesiologia.reportekine.destroy --}}
+                                                                {{-- Ruta CORRECTA: responsable.kinesiologia.reportekine.destroy --}}
                                                                 <form action="{{ route('responsable.kinesiologia.reportekine.destroy', ['cod_kine' => $fichaKine->cod_kine]) }}" method="POST" style="display:inline-block;" class="form-delete-kine-report">
                                                                     @csrf
                                                                     @method('DELETE')
@@ -193,6 +176,10 @@ indexRepKine:
 
 {{-- Scripts específicos de la vista --}}
 @push('scripts')
+    {{-- jQuery (si es necesario para otras librerías como DataTables) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {{-- Feather Icons para los íconos --}}
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     {{-- SweetAlert2 JS --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -240,8 +227,8 @@ indexRepKine:
                 const queryString = new URLSearchParams(formData).toString(); // Convertir a string de query
                 
                 // Redirige a la ruta de exportación de Excel con los parámetros de filtro
-                // Ruta: responsable.kinesiologia.reportekine.exportExcel
-                window.location.href = {{ route('responsable.kinesiologia.reportekine.exportExcel') }}?${queryString};
+                // Ruta CORRECTA: responsable.kinesiologia.reportekine.exportExcel
+                window.location.href = `{{ route('responsable.kinesiologia.reportekine.exportExcel') }}?${queryString}`;
             });
 
             // Manejo de SweetAlert2 para confirmaciones de eliminación

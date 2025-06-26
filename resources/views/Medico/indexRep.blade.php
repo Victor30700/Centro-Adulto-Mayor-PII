@@ -148,10 +148,6 @@
                                                         <td>{{ optional($reporte->usuario->persona)->nombres }} {{ optional($reporte->usuario->persona)->primer_apellido }}</td>
                                                         <td>
                                                             <div class="btn-group" role="group">
-                                                                {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.show_atencion_enfermeria --}}
-                                                                <a href="{{ route('responsable.enfermeria.reportes_enfermeria.show_atencion_enfermeria', ['cod_enf' => $reporte->cod_enf]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Ver Detalles">
-                                                                    <i class="fe fe-eye"></i>
-                                                                </a>
                                                                 {{-- Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.destroy_atencion_enfermeria --}}
                                                                 <form action="{{ route('responsable.enfermeria.reportes_enfermeria.destroy_atencion_enfermeria', ['cod_enf' => $reporte->cod_enf]) }}" method="POST" style="display:inline-block;" class="form-delete-report">
                                                                     @csrf
@@ -240,7 +236,7 @@
                 const formData = new FormData(form);
                 const queryString = new URLSearchParams(formData).toString();
                 // Ruta CORRECTA según web.php: responsable.enfermeria.reportes_enfermeria.exportar_excel
-                window.location.href = {{ route('responsable.enfermeria.reportes_enfermeria.exportar_excel') }}?${queryString};
+                window.location.href = `{{ route('responsable.enfermeria.reportes_enfermeria.exportar_excel') }}?${queryString}`;
             });
 
             // Manejo de SweetAlert2 para confirmaciones de eliminación

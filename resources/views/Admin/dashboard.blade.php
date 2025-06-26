@@ -72,17 +72,18 @@
             </div>
         </div>
         
+        {{-- NUEVA TARJETA COMBINADA: FECHA Y HORA --}}
         <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
-            <div class="card overflow-hidden sales-card bg-danger-gradient">
+            <div class="card overflow-hidden sales-card bg-info-gradient">
                 <div class="card-body">
                     <div class="row">
                         <div class="col">
-                            <h6 class="card-text mb-0 text-white">Usuarios Bloqueados</h6>
-                            <h4 class="mb-0 num-text text-white">{{ $lockedUsers ?? 0 }}</h4>
+                            <h6 id="current-date" class="card-text mb-0 text-white">Cargando fecha...</h6>
+                            <h4 id="live-clock" class="mb-0 num-text text-white">Cargando hora...</h4>
                         </div>
                         <div class="col col-auto">
-                            <div class="counter-icon bg-gradient-danger ms-auto box-shadow-danger">
-                                <i class="fe fe-lock text-white mb-5"></i>
+                            <div class="counter-icon bg-gradient-info ms-auto box-shadow-info">
+                                <i class="fe fe-calendar text-white mb-5"></i>
                             </div>
                         </div>
                     </div>
@@ -268,6 +269,7 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
+        // --- INICIALIZACIÓN DE DATATABLE (SIN CAMBIOS) ---
         $('#usersTable').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
@@ -305,9 +307,34 @@
                 }
             ]
         });
+
+        // --- FUNCIONALIDAD: FECHA Y HORA COMBINADA ---
+
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 1. Formato de Hora (HH:MM:SS)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            $('#live-clock').text(`${hours}:${minutes}:${seconds}`);
+            
+            // 2. Formato de Fecha (ej: jueves, 26 de junio de 2025)
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('es-ES', options);
+            // Capitalizar la primera letra del día
+            const capitalizedDate = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+            $('#current-date').text(capitalizedDate);
+        }
+        
+        // Actualizar cada segundo
+        setInterval(updateDateTime, 1000);
+        
+        // Llamada inicial para que no haya retraso al cargar la página
+        updateDateTime(); 
     });
 
-    // Función para ver detalles del usuario (ahora usando CI)
+    // --- FUNCIÓN PARA VER DETALLES (SIN CAMBIOS) ---
     function viewUser(userCi) {
         const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
         const content = document.getElementById('userDetailsContent');

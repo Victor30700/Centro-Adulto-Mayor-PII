@@ -18,7 +18,10 @@ return new class extends Migration
             $table->string('direccion', 255);
             $table->string('telefono_juridica', 20);
             $table->string('nombre_funcionario', 255);
-
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -------------------------------------------------------------------------------------------
+           
             $table->foreign('id_encargado')->references('id_encargado')->on('encargado')->onDelete('cascade');
         });
     }

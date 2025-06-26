@@ -18,6 +18,9 @@ return new class extends Migration
         $table->unsignedBigInteger('nro_an5');
         $table->foreign('nro_an5')->references('nro_an5')->on('anexo_n5')->onDelete('cascade');
         $table->timestamps();
+         // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+        $table->softDeletes();
+       // ---
         });
     }
 

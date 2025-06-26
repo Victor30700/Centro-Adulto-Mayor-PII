@@ -16,7 +16,10 @@ return new class extends Migration
     $table->unsignedBigInteger('id_adulto');
     $table->string('tipo_encargado', 100); // Ej: tutor, responsable médico, etc.
     $table->timestamps();
-
+      // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+     $table->softDeletes();
+        // -------------------------------------------------------------------------------------------
+           
     $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');
 });
 

@@ -28,6 +28,9 @@ return new class extends Migration
             $table->foreign('id_adulto')->references('id_adulto')->on('adulto_mayor')->onDelete('cascade');
 
             $table->timestamps(); // created_at, updated_at
+            // ---ESTA LINEA ES LA ENCARGADA DEL BORRADO LOGICO----------------------------------------------------------------
+            $table->softDeletes();
+            // -----------------------------------------------------------------
         });
     }
 
