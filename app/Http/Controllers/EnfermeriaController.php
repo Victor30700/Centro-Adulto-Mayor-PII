@@ -216,7 +216,7 @@ class EnfermeriaController extends Controller
             $fichasEnfermeria = $adulto->enfermerias->sortByDesc('created_at');
 
             // Pasamos el objeto $adulto completo y la colección de fichas de enfermería
-            return view('Medico.verDetallesEnfermeria', compact('adulto', 'fichasEnfermeria'));
+            return view('Medico.VerDetallesEnfermeria', compact('adulto', 'fichasEnfermeria'));
 
         } catch (ModelNotFoundException $e) {
             Log::error("Adulto Mayor no encontrado con ID: {$id_adulto}. Error: " . $e->getMessage());
