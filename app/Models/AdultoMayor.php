@@ -20,6 +20,7 @@ class AdultoMayor extends Model
         'discapacidad',
         'vive_con',
         'migrante',
+        'origen_migracion', // <-- CAMPO AÑADIDO
         'nro_caso',
         'fecha',
     ];

@@ -66,7 +66,7 @@
                             </li>
                         </ul>
 
-                        {{-- Contenido de las Pestañas (Sin cambios en el HTML) --}}
+                        {{-- Contenido de las Pestañas --}}
                         <div class="tab-content mt-3" id="adultMayorTabContent">
                             {{-- Pestaña 1: Datos Personales --}}
                             <div class="tab-pane fade show active" id="datosPersonales" role="tabpanel" aria-labelledby="datos-personales-tab">
@@ -88,11 +88,18 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    {{-- ========================================================================= --}}
+                                    {{-- === INICIO: CAMBIO EN CAMPO CI === --}}
+                                    {{-- ========================================================================= --}}
                                     <div class="col-md-4 mb-3">
                                         <label for="ci" class="form-label">CI (Cédula de Identidad) <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="ci" name="ci" value="{{ old('ci') }}" required pattern="\d+">
-                                        <div class="invalid-feedback" id="ci_error_message">Por favor, ingrese el CI (solo números).</div>
+                                        {{-- Se elimina el atributo pattern para permitir letras y guiones --}}
+                                        <input type="text" class="form-control" id="ci" name="ci" value="{{ old('ci') }}" required>
+                                        <div class="invalid-feedback" id="ci_error_message">Por favor, ingrese el CI.</div>
                                     </div>
+                                    {{-- ========================================================================= --}}
+                                    {{-- === FIN: CAMBIO EN CAMPO CI === --}}
+                                    {{-- ========================================================================= --}}
                                     <div class="col-md-4 mb-3">
                                         <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" required>
@@ -128,11 +135,18 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    {{-- ========================================================================= --}}
+                                    {{-- === INICIO: CAMBIO EN CAMPO TELEFONO === --}}
+                                    {{-- ========================================================================= --}}
                                     <div class="col-md-4 mb-3">
                                         <label for="telefono" class="form-label">Teléfono/Celular <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ old('telefono') }}" required pattern="\d+">
-                                        <div class="invalid-feedback">Por favor, ingrese el teléfono (solo números).</div>
+                                        {{-- Se elimina el atributo pattern para consistencia --}}
+                                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ old('telefono') }}" required>
+                                        <div class="invalid-feedback">Por favor, ingrese el teléfono.</div>
                                     </div>
+                                    {{-- ========================================================================= --}}
+                                    {{-- === FIN: CAMBIO EN CAMPO TELEFONO === --}}
+                                    {{-- ========================================================================= --}}
                                     <div class="col-md-4 mb-3">
                                         <label for="zona_comunidad" class="form-label">Zona/Comunidad</label>
                                         <input type="text" class="form-control" id="zona_comunidad" name="zona_comunidad" value="{{ old('zona_comunidad') }}">
@@ -160,27 +174,38 @@
                                         <small class="form-text text-muted">Esta información ayuda a entender su situación social y de apoyo.</small>
                                     </div>
                                 </div>
+                                
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-6 mb-3">
                                         <label for="migrante" class="form-label">Situación Migratoria</label>
                                         <select class="form-select" id="migrante" name="migrante">
-                                            <option value="0" {{ old('migrante') == '0' ? 'selected' : '' }}>No es migrante</option>
-                                            <option value="1" {{ old('migrante') == '1' ? 'selected' : '' }}>Es migrante</option>
+                                            <option value="0" @if(old('migrante', '0') == '0') selected @endif>No es migrante</option>
+                                            <option value="1" @if(old('migrante') == '1') selected @endif>Es migrante</option>
                                         </select>
                                         <small class="form-text text-muted">Indica si la persona migró de otra región o país.</small>
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    
+                                    <!-- Campo condicional para el origen del migrante -->
+                                    <div class="col-md-6 mb-3" id="origen_migracion_wrapper" style="display: none;">
+                                        <label for="origen_migracion" class="form-label">Lugar de Origen (Migración) <span class="text-danger" id="origen_migracion_asterisk" style="display: none;">*</span></label>
+                                        <input type="text" class="form-control" id="origen_migracion" name="origen_migracion" value="{{ old('origen_migracion') }}" placeholder="País, Departamento o Ciudad">
+                                        <div class="invalid-feedback">Por favor, ingrese el lugar de origen.</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
                                         <label for="nro_caso" class="form-label">Número de Caso</label>
                                         <input type="text" class="form-control" id="nro_caso" name="nro_caso" value="{{ old('nro_caso') }}" placeholder="Ej: AM-2024-001">
                                         <small class="form-text text-muted">Número único de identificación del caso (opcional).</small>
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-6 mb-3">
                                         <label for="fecha" class="form-label">Fecha de Registro <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="fecha" name="fecha" value="{{ old('fecha', date('Y-m-d')) }}" required>
                                         <div class="invalid-feedback">Por favor, ingrese la fecha de registro.</div>
                                         <small class="form-text text-muted">Fecha en que se registra al adulto mayor en el sistema.</small>
                                     </div>
                                 </div>
+
                                 <div class="d-flex justify-content-between mt-4">
                                     <button type="button" class="btn btn-outline-success" id="prevButton">
                                         <i class="fe fe-arrow-left"></i> Anterior
@@ -189,7 +214,6 @@
                                         <button type="submit" class="btn btn-success" id="submitButton">
                                             <i class="fe fe-check-circle"></i> Registrar Adulto Mayor
                                         </button>
-                                        {{-- Mejora: El botón cancelar ahora regresa a la página anterior --}}
                                         <a href="{{ url()->previous() }}" class="btn btn-danger ms-2">
                                             <i class="fe fe-x"></i> Cancelar
                                         </a>
@@ -285,12 +309,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registerAdultoMayorForm');
     const nextButton = document.getElementById('nextButton');
     const prevButton = document.getElementById('prevButton');
-
     const datosPersonalesTabEl = document.getElementById('datos-personales-tab');
     const datosAdultoMayorTabEl = document.getElementById('datos-adulto-mayor-tab');
+    
+    // --- Lógica para campo condicional de migración ---
+    const migranteSelect = document.getElementById('migrante');
+    const origenMigracionWrapper = document.getElementById('origen_migracion_wrapper');
+    const origenMigracionInput = document.getElementById('origen_migracion');
+    const origenMigracionAsterisk = document.getElementById('origen_migracion_asterisk');
 
-    const ciInput = document.getElementById('ci');
-    const telefonoInput = document.getElementById('telefono');
+    function toggleOrigenMigracion() {
+        if (migranteSelect && origenMigracionWrapper && origenMigracionInput && origenMigracionAsterisk) {
+            if (migranteSelect.value === '1') { // '1' para "Es migrante"
+                origenMigracionWrapper.style.display = 'block';
+                origenMigracionInput.required = true;
+                origenMigracionAsterisk.style.display = 'inline';
+            } else {
+                origenMigracionWrapper.style.display = 'none';
+                origenMigracionInput.required = false;
+                origenMigracionInput.value = ''; // Limpiar valor al ocultar
+                origenMigracionInput.classList.remove('is-invalid', 'is-valid');
+                origenMigracionAsterisk.style.display = 'none';
+            }
+        }
+    }
+
+    if (migranteSelect) {
+        migranteSelect.addEventListener('change', toggleOrigenMigracion);
+        toggleOrigenMigracion();
+    }
 
     // --- Instanciación de pestañas (Bootstrap.Tab) ---
     let bsTabDatosPersonales = null;
@@ -302,57 +349,45 @@ document.addEventListener('DOMContentLoaded', function() {
         bsTabDatosAdultoMayor = new bootstrap.Tab(datosAdultoMayorTabEl);
     }
 
-    // --- Lógica de Validación de Campos ---
+    // =========================================================================
+    // === INICIO: MODIFICACIÓN DE VALIDACIÓN JAVASCRIPT ===
+    // =========================================================================
     function validateField(input) {
         input.classList.remove('is-invalid', 'is-valid');
         const feedback = input.parentElement.querySelector('.invalid-feedback');
         let isValid = true;
-        let message = '';
 
         if (input.required) {
             if (input.type === 'checkbox') {
                 if (!input.checked) {
                     isValid = false;
-                    message = feedback ? feedback.textContent : 'Este campo es obligatorio.';
                 }
             } else if (!input.value.trim()) {
                 isValid = false;
-                message = feedback ? feedback.textContent : 'Este campo es obligatorio.';
             }
         }
 
-        if (isValid && input.pattern) {
-            const regex = new RegExp(input.pattern);
-            if (!regex.test(input.value)) {
-                isValid = false;
-                if (input.id === 'ci') {
-                    message = 'El CI debe contener solo números.';
-                } else if (input.id === 'telefono') {
-                    message = 'El teléfono debe contener solo números.';
-                } else {
-                    message = 'Formato incorrecto.';
-                }
-                if (feedback) feedback.textContent = message;
-            } else {
-                if (feedback && input.id === 'ci') {
-                    feedback.textContent = 'Por favor, ingrese el CI (solo números).';
-                }
-                if (feedback && input.id === 'telefono') {
-                    feedback.textContent = 'Por favor, ingrese el teléfono (solo números).';
-                }
-            }
-        }
+        // Se elimina la validación de formato 'pattern' del lado del cliente.
+        // La validación compleja (como el formato de CI) ahora es manejada
+        // exclusivamente por el backend para mayor seguridad y consistencia.
+        // Este script solo se encarga de verificar que los campos requeridos no estén vacíos.
 
         if (isValid) {
             input.classList.add('is-valid');
         } else {
             input.classList.add('is-invalid');
+            if (feedback && !input.value.trim() && input.required) {
+                // Se puede mostrar un mensaje genérico si se desea, pero el div ya tiene uno.
+            }
         }
         return isValid;
     }
+    // =========================================================================
+    // === FIN: MODIFICACIÓN DE VALIDACIÓN JAVASCRIPT ===
+    // =========================================================================
 
     // Añadir listeners de validación a todos los required
-    form.querySelectorAll('input[required], select[required]').forEach(input => {
+    form.querySelectorAll('input[required], select[required], textarea[required]').forEach(input => {
         input.addEventListener('input', () => validateField(input));
         input.addEventListener('change', () => validateField(input));
     });
@@ -362,11 +397,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!tabPane) return { isValid: true, firstInvalidElement: null };
         let allFieldsValid = true;
         let firstInvalid = null;
-        const fields = tabPane.querySelectorAll('input[required], select[required]');
+        const fields = tabPane.querySelectorAll('input, select, textarea');
         fields.forEach(field => {
-            if (!validateField(field)) {
-                allFieldsValid = false;
-                if (!firstInvalid) firstInvalid = field;
+            if (field.required && (field.offsetWidth > 0 || field.offsetHeight > 0)) {
+                if (!validateField(field)) {
+                    allFieldsValid = false;
+                    if (!firstInvalid) firstInvalid = field;
+                }
             }
         });
         return { isValid: allFieldsValid, firstInvalidElement: firstInvalid };
@@ -424,10 +461,12 @@ document.addEventListener('DOMContentLoaded', function() {
             firstInvalidElementOverall = personalValidation.firstInvalidElement;
             tabIdOfFirstError = 'datos-personales-tab';
             document.getElementById('datosPersonales').querySelectorAll('.is-invalid').forEach(el => {
-                const labelEl = form.querySelector(`label[for="${el.id}"]`);
-                const label = labelEl ? labelEl.textContent.replace('*','').trim() : (el.name || el.id);
-                const feedbackMsg = el.parentElement.querySelector('.invalid-feedback')?.textContent || 'Error desconocido.';
-                errorMessages.push(`<b>${label}:</b> ${feedbackMsg}`);
+                if (el.offsetWidth > 0 || el.offsetHeight > 0) {
+                    const labelEl = form.querySelector(`label[for="${el.id}"]`);
+                    const label = labelEl ? labelEl.textContent.replace('*','').trim() : (el.name || el.id);
+                    const feedbackMsg = el.parentElement.querySelector('.invalid-feedback')?.textContent || 'Error desconocido.';
+                    errorMessages.push(`<b>${label}:</b> ${feedbackMsg}`);
+                }
             });
         }
 
@@ -440,16 +479,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 tabIdOfFirstError = 'datos-adulto-mayor-tab';
             }
             document.getElementById('datosAdultoMayor').querySelectorAll('.is-invalid').forEach(el => {
-                const labelEl = form.querySelector(`label[for="${el.id}"]`);
-                const label = labelEl ? labelEl.textContent.replace('*','').trim() : (el.name || el.id);
-                const feedbackMsg = el.parentElement.querySelector('.invalid-feedback')?.textContent || 'Error desconocido.';
-                if (!errorMessages.some(msg => msg.startsWith(`<b>${label}:`))) {
-                    errorMessages.push(`<b>${label}:</b> ${feedbackMsg}`);
+                if (el.offsetWidth > 0 || el.offsetHeight > 0) {
+                    const labelEl = form.querySelector(`label[for="${el.id}"]`);
+                    const label = labelEl ? labelEl.textContent.replace('*','').trim() : (el.name || el.id);
+                    const feedbackMsg = el.parentElement.querySelector('.invalid-feedback')?.textContent || 'Error desconocido.';
+                    if (!errorMessages.some(msg => msg.startsWith(`<b>${label}:`))) {
+                        errorMessages.push(`<b>${label}:</b> ${feedbackMsg}`);
+                    }
                 }
             });
         }
 
-        errorMessages = [...new Set(errorMessages)]; // Eliminar mensajes duplicados
+        errorMessages = [...new Set(errorMessages)];
 
         if (!allValid) {
             let htmlErrorMessages = 'Por favor, corrija los siguientes errores:<br><ul style="text-align: left; margin-left: 20px; padding-left:20px; list-style-type: disc;">';
@@ -490,17 +531,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
-            // Envío real del formulario
-            setTimeout(() => {
-                Swal.fire('¡Registrado!', 'El adulto mayor ha sido registrado con éxito.', 'success')
-                    .then(() => {
-                        form.submit();
-                    });
-            }, 1000);
+            form.submit();
         }
     });
 
-    // Establecer fecha actual por defecto si no hay valor
     const fechaInput = document.getElementById('fecha');
     if (fechaInput && !fechaInput.value) {
         const today = new Date().toISOString().split('T')[0];

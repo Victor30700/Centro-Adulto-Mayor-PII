@@ -17,6 +17,12 @@ return new class extends Migration
             $table->text('discapacidad')->nullable();
             $table->string('vive_con', 200)->nullable();
             $table->boolean('migrante')->default(false);
+            
+            // =========================================================================
+            // === NUEVO CAMPO AÑADIDO ===
+            // =========================================================================
+            $table->string('origen_migracion', 255)->nullable()->comment('Lugar de origen si el adulto mayor es migrante');
+            
             $table->string('nro_caso', 50)->unique()->nullable();
             $table->date('fecha');
             $table->timestamps();

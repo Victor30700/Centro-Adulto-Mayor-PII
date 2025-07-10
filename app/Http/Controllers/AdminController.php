@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator; // Usar Validator para más control
+use Illuminate\Support\Facades\Auth; // <-- LÍNEA IMPORTANTE: Importa la clase Auth
 use Carbon\Carbon; // Para calcular la edad
 use Illuminate\Validation\Rule;
 
@@ -207,17 +208,25 @@ class AdminController extends Controller
     // ==================================================================
 
 
- public function storeAdultoMayor(Request $request)
+public function storeAdultoMayor(Request $request)
     {
-        // Agregar logging para depuración
         Log::info('Iniciando registro de adulto mayor', ['data' => $request->all()]);
 
+        // =========================================================================
+        // === INICIO: MODIFICACIÓN EN VALIDACIÓN ===
+        // =========================================================================
         $validator = Validator::make($request->all(), [
             // Pestaña 1: Datos Personales (tabla 'persona')
             'nombres' => 'required|string|max:255',
             'primer_apellido' => 'required|string|max:255',
             'segundo_apellido' => 'nullable|string|max:255',
-            'ci' => 'required|string|max:20|unique:persona,ci',
+            'ci' => [
+                'required',
+                'string',
+                'max:25', // Se aumenta el límite por si acaso
+                'regex:/^[a-zA-Z0-9-]+$/', // Permite letras (mayúsculas/minúsculas), números y guiones
+                'unique:persona,ci'
+            ],
             'fecha_nacimiento' => 'required|date|before_or_equal:today',
             'sexo' => 'required|string|in:F,M,O',
             'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
@@ -228,7 +237,8 @@ class AdminController extends Controller
             // Pestaña 2: Datos específicos de adulto mayor (tabla 'adulto_mayor')
             'discapacidad' => 'nullable|string',
             'vive_con' => 'nullable|string|max:200',
-            'migrante' => 'nullable|in:0,1',
+            'migrante' => 'required|in:0,1',
+            'origen_migracion' => 'nullable|string|max:255|required_if:migrante,1',
             'nro_caso' => 'nullable|string|max:50|unique:adulto_mayor,nro_caso',
             'fecha' => 'required|date',
         ], [
@@ -237,6 +247,7 @@ class AdminController extends Controller
             'primer_apellido.required' => 'El campo primer apellido es obligatorio.',
             'ci.required' => 'El campo CI es obligatorio.',
             'ci.unique' => 'Este CI ya ha sido registrado.',
+            'ci.regex' => 'El formato del CI solo puede contener letras, números y guiones.', // Mensaje para el nuevo formato
             'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
             'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
             'sexo.required' => 'El campo sexo es obligatorio.',
@@ -248,8 +259,8 @@ class AdminController extends Controller
             'nro_caso.unique' => 'Este número de caso ya ha sido registrado.',
             'fecha.required' => 'La fecha de registro es obligatoria.',
             'fecha.date' => 'La fecha de registro debe ser una fecha válida.',
+            'origen_migracion.required_if' => 'El lugar de origen es obligatorio si la persona es migrante.',
         ]);
-
         if ($validator->fails()) {
             Log::warning('Validación falló para registro de adulto mayor', ['errors' => $validator->errors()]);
             return redirect()->back()
@@ -287,12 +298,12 @@ class AdminController extends Controller
 
             // 2. Preparar datos para adulto_mayor
             $adultoMayorData = [
-                'ci' => $request->ci, // Clave foránea hacia persona
+                'ci' => $request->ci,
                 'discapacidad' => $request->discapacidad,
                 'vive_con' => $request->vive_con,
-                'migrante' => $request->migrante == '1' ? true : false, // Conversión explícita
+                'migrante' => $request->migrante == '1' ? true : false,
+                'origen_migracion' => $request->migrante == '1' ? $request->input('origen_migracion') : null, // <-- CAMPO AÑADIDO CON LÓGICA
                 'fecha' => $request->fecha,
-                // 'created_at' y 'updated_at' usualmente son manejados por Eloquent automáticamente
             ];
 
             // Solo agregar nro_caso si se proporcionó y no está vacío
@@ -373,32 +384,19 @@ class AdminController extends Controller
 
 
     /**
-     * Buscar adultos mayores (AJAX)
+     * Buscar adultos mayores (AJAX) - VERSIÓN OPTIMIZADA CON FULLTEXT SEARCH
      */
     public function buscarAdultoMayor(Request $request)
     {
         try {
             $busqueda = $request->get('busqueda', '');
             
-            // ==================================================================
-            // ===                 INICIO: SOLUCIÓN DEL ERROR                 ===
-            // ==================================================================
-            
             // Se inicia la consulta con el alias 'am'
             $query = AdultoMayor::from('adulto_mayor as am')
-                
-                // *** CORRECCIÓN CLAVE Y DEFINITIVA ***
-                // 1. withTrashed(): Le dice a Eloquent que IGNORE temporalmente el filtro automático
-                //    de SoftDeletes para esta consulta. Esto evita que agregue la cláusula
-                //    "adulto_mayor"."deleted_at" que causa el error.
+                // Se incluye withTrashed() y whereNull() para manejar correctamente el SoftDeletes con el alias
                 ->withTrashed()
-                
                 ->join('persona as p', 'am.ci', '=', 'p.ci')
-                
-                // 2. whereNull('am.deleted_at'): Añadimos manualmente la condición para obtener
-                //    solo los registros no eliminados, pero esta vez usando el alias correcto 'am'.
                 ->whereNull('am.deleted_at')
-                
                 ->select([
                     'p.ci',
                     'p.nombres',
@@ -421,21 +419,44 @@ class AdminController extends Controller
 
             if (!empty($busqueda)) {
                 $query->where(function($q) use ($busqueda) {
-                    $q->where('p.ci', 'ILIKE', '%' . $busqueda . '%')
-                      ->orWhere('p.nombres', 'ILIKE', '%' . $busqueda . '%')
-                      ->orWhere('p.primer_apellido', 'ILIKE', '%' . $busqueda . '%')
-                      ->orWhere('p.segundo_apellido', 'ILIKE', '%' . $busqueda . '%')
-                      ->orWhereRaw("p.nombres || ' ' || p.primer_apellido || ' ' || COALESCE(p.segundo_apellido, '') ILIKE ?", ['%' . $busqueda . '%']);
+                    // Búsqueda por CI: Sigue siendo rápida porque no usa un comodín inicial.
+                    $q->where('p.ci', 'LIKE', $busqueda . '%');
+
+                    // =========================================================================
+                    // === INICIO: CAMBIO A BÚSQUEDA FULLTEXT ===
+                    // =========================================================================
+                    // Se usa `orWhereRaw` para ejecutar la consulta de texto completo nativa.
+                    // `MATCH(...) AGAINST(...)` utiliza el índice FULLTEXT que creamos y es extremadamente rápido.
+                    
+                    $driver = DB::connection()->getDriverName();
+                    
+                    if ($driver === 'mysql') {
+                        // Sintaxis para MySQL
+                        $q->orWhereRaw(
+                           'MATCH(p.nombres, p.primer_apellido, p.segundo_apellido) AGAINST(? IN BOOLEAN MODE)',
+                           [$busqueda . '*'] // El '*' actúa como comodín para palabras que empiezan con el término.
+                       );
+                    } elseif ($driver === 'pgsql') {
+                        // Sintaxis para PostgreSQL (requiere una configuración de tsvector diferente, pero esto funcionaría)
+                        $q->orWhereRaw(
+                            "to_tsvector('spanish', p.nombres || ' ' || p.primer_apellido || ' ' || p.segundo_apellido) @@ to_tsquery('spanish', ?)",
+                            [$busqueda . ':*']
+                        );
+                    } else {
+                        // Fallback para otras bases de datos como SQLite que no soportan FULLTEXT de la misma manera
+                        $q->orWhere('p.nombres', 'ILIKE', '%' . $busqueda . '%')
+                          ->orWhere('p.primer_apellido', 'ILIKE', '%' . $busqueda . '%')
+                          ->orWhere('p.segundo_apellido', 'ILIKE', '%' . $busqueda . '%');
+                    }
+                    // =========================================================================
+                    // === FIN: CAMBIO A BÚSQUEDA FULLTEXT ===
+                    // =========================================================================
                 });
             }
 
             $adultosMayores = $query->orderBy('p.primer_apellido', 'asc')
                                     ->orderBy('p.nombres', 'asc')
                                     ->paginate(10);
-
-            // ==================================================================
-            // ===                  FIN: SOLUCIÓN DEL ERROR                   ===
-            // ==================================================================
 
             return response()->json([
                 'success' => true,
@@ -451,23 +472,23 @@ class AdminController extends Controller
             ], 500);
         }
     }
-
     /**
     * Mostrar formulario de edición
     */
     public function editarAdultoMayor($ci) // Se recibe el CI de la persona
     {
         try {
-            $adultoMayor = DB::table('persona as p') // Empezar por persona para obtener todos sus datos
+             $adultoMayor = DB::table('persona as p')
                 ->join('adulto_mayor as am', 'p.ci', '=', 'am.ci')
                 ->select([
                     'p.*', // Todos los campos de persona
-                    'am.id_adulto', // Clave primaria de adulto_mayor
+                    'am.id_adulto',
                     'am.discapacidad',
                     'am.vive_con',
                     'am.migrante',
+                    'am.origen_migracion', // <-- CAMPO AÑADIDO
                     'am.nro_caso',
-                    'am.fecha as fecha_registro_am' // Renombrar para evitar colisión con persona.fecha si existiera
+                    'am.fecha as fecha_registro_am'
                 ])
                 ->where('p.ci', $ci)
                 ->first();
@@ -511,12 +532,15 @@ class AdminController extends Controller
             'nombres' => 'required|string|max:255',
             'primer_apellido' => 'required|string|max:255',
             'segundo_apellido' => 'nullable|string|max:255',
-            'ci' => 'required|string|max:20|unique:persona,ci,' . $ci_original . ',ci',
+            'ci' => [
+                'required',
+                'string',
+                'max:25',
+                'regex:/^[a-zA-Z0-9-]+$/', // Permite letras, números y guiones
+                Rule::unique('persona')->ignore($ci_original, 'ci') // Ignora el CI actual al verificar unicidad
+            ],
             'fecha_nacimiento' => 'required|date|before_or_equal:today',
             'sexo' => 'required|string|in:F,M,O',
-            // ===================== CORRECCIÓN CLAVE =====================
-            // Se ajusta la regla de validación para que coincida EXACTAMENTE
-            // con los valores permitidos en la base de datos.
             'estado_civil' => 'required|string|in:casado,divorciado,soltero,otro',
             'domicilio' => 'required|string|max:255',
             'telefono' => 'required|string|max:20',
@@ -525,7 +549,8 @@ class AdminController extends Controller
             // Datos de adulto mayor
             'discapacidad' => 'nullable|string',
             'vive_con' => 'nullable|string|max:200',
-            'migrante' => 'nullable|in:0,1',
+            'migrante' => 'required|in:0,1',
+            'origen_migracion' => 'nullable|string|max:255|required_if:migrante,1',
             'nro_caso' => 'nullable|string|max:50|unique:adulto_mayor,nro_caso,' . $idAdultoMayor . ',id_adulto',
             'fecha' => 'required|date',
         ], [
@@ -534,17 +559,19 @@ class AdminController extends Controller
             'primer_apellido.required' => 'El campo primer apellido es obligatorio.',
             'ci.required' => 'El campo CI es obligatorio.',
             'ci.unique' => 'Este CI ya ha sido registrado por otra persona.',
+            'ci.regex' => 'El formato del CI solo puede contener letras, números y guiones.',
             'fecha_nacimiento.required' => 'La fecha de nacimiento es obligatoria.',
             'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser futura.',
             'sexo.required' => 'El campo sexo es obligatorio.',
             'estado_civil.required' => 'El estado civil es obligatorio.',
-            'estado_civil.in' => 'El valor seleccionado para el estado civil no es válido.', // Mensaje de error más específico
+            'estado_civil.in' => 'El valor seleccionado para el estado civil no es válido.',
             'domicilio.required' => 'El domicilio es obligatorio.',
             'telefono.required' => 'El teléfono es obligatorio.',
             'nro_caso.unique' => 'Este número de caso ya ha sido registrado para otro adulto mayor.',
             'fecha.required' => 'La fecha de registro del adulto mayor es obligatoria.',
+            'origen_migracion.required_if' => 'El lugar de origen es obligatorio si la persona es migrante.',
         ]);
-
+        
         if ($validator->fails()) {
             return redirect()->back()
                              ->withErrors($validator)
@@ -580,6 +607,7 @@ class AdminController extends Controller
                 'discapacidad' => $request->discapacidad,
                 'vive_con' => $request->vive_con,
                 'migrante' => $request->migrante == '1' ? true : false,
+                'origen_migracion' => $request->migrante == '1' ? $request->input('origen_migracion') : null, // <-- CAMPO AÑADIDO CON LÓGICA
                 'fecha' => $request->fecha,
                 'nro_caso' => $request->filled('nro_caso') ? $request->nro_caso : null,
                 'updated_at' => now()
@@ -603,11 +631,31 @@ class AdminController extends Controller
                              ->withInput();
         }
     }
-    /**
-    * Eliminar adulto mayor
-    */
-     public function eliminarAdultoMayor($ci)
+        /**
+     * Eliminar adulto mayor (con protección de rol implementada)
+     */
+    public function eliminarAdultoMayor($ci)
     {
+        // =========================================================================
+        // === INICIO: MEDIDA DE SEGURIDAD POR ROL ===
+        // =========================================================================
+        // 1. Se verifica si el usuario autenticado tiene el rol de 'admin'.
+        if (optional(Auth::user()->rol)->nombre_rol !== 'admin') {
+            // 2. Si no es 'admin', se registra el intento no autorizado y se redirige.
+            Log::warning('Intento de eliminación NO AUTORIZADO de adulto mayor', [
+                'user_id' => Auth::id(),
+                'user_role' => optional(Auth::user()->rol)->nombre_rol ?? 'sin_rol',
+                'remote_ip' => request()->ip(),
+                'ci_adulto' => $ci
+            ]);
+            
+            return redirect()->route('gestionar-adultomayor.index')
+                             ->with('error', 'Acción no autorizada. No tiene permisos para eliminar registros.');
+        }
+        // =========================================================================
+        // === FIN: MEDIDA DE SEGURIDAD POR ROL ===
+        // =========================================================================
+
         DB::beginTransaction();
 
         try {
@@ -616,18 +664,16 @@ class AdminController extends Controller
             
             if (!$persona) {
                 // La redirección no necesita rollback si no se hizo nada.
-                return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+                return redirect()->route('gestionar-adultomayor.index')
                                  ->with('error', 'Persona no encontrada.');
             }
 
             // Eliminar lógicamente el registro de AdultoMayor asociado (si existe).
-            // Eloquent se encargará de añadir la condición 'deleted_at is null'.
             if ($persona->adultoMayor) {
                 $persona->adultoMayor->delete(); // Esto aplica Soft Delete
             }
 
             // Eliminar lógicamente la persona.
-            // Esto también aplica Soft Delete gracias al trait en el modelo Persona.
             $persona->delete();
             
             // Si la persona también era un usuario del sistema, eliminarlo lógicamente también.
@@ -637,14 +683,14 @@ class AdminController extends Controller
 
             DB::commit();
 
-            return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+            return redirect()->route('gestionar-adultomayor.index')
                              ->with('success', 'Adulto Mayor enviado a la papelera exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error eliminando adulto mayor: ' . $e->getMessage());
             
-            return redirect()->route('gestionar-adultomayor.index') // <-- RUTA CORREGIDA
+            return redirect()->route('gestionar-adultomayor.index')
                              ->with('error', 'Error al enviar el adulto mayor a la papelera.');
         }
     }

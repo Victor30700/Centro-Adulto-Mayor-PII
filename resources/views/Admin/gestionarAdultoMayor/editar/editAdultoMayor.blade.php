@@ -6,10 +6,17 @@
     <div>
         <ol class="breadcrumb">
             @php
-                $rol = optional(Auth::user()->rol)->nombre_rol ?? 'default';
-                $dashboardRoute = in_array($rol, ['admin', 'legal', 'responsable']) ? $rol . '.dashboard' : 'login';
+                $user = auth()->user();
+                $rol = $user->role_name ?? 'admin'; // Usando el accessor del modelo User
+                $dashboardRoute = route('login'); // Fallback
+                if (in_array($rol, ['admin', 'legal', 'asistente-social'])) {
+                    $dashboardRouteName = $rol . '.dashboard';
+                    if (Route::has($dashboardRouteName)) {
+                        $dashboardRoute = route($dashboardRouteName);
+                    }
+                }
             @endphp
-            <li class="breadcrumb-item"><a href="{{ route($dashboardRoute) }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ $dashboardRoute }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('gestionar-adultomayor.index') }}">Gestionar Adultos Mayores</a></li>
             <li class="breadcrumb-item active" aria-current="page">Editar Adulto Mayor</li>
         </ol>
@@ -70,12 +77,13 @@
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label for="ci" class="form-label">CI <span class="text-danger">*</span></label>
+                            {{-- Este campo ya es correcto, no tiene 'pattern' y permitirá letras, números y guiones --}}
                             <input type="text" class="form-control @error('ci') is-invalid @enderror" id="ci" name="ci" value="{{ old('ci', $adultoMayor->ci) }}" required>
                             @error('ci')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control @error('fecha_nacimiento') is-invalid @enderror" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento', $adultoMayor->fecha_nacimiento) }}" required>
+                            <input type="date" class="form-control @error('fecha_nacimiento') is-invalid @enderror" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento', \Carbon\Carbon::parse($adultoMayor->fecha_nacimiento)->format('Y-m-d')) }}" required>
                             @error('fecha_nacimiento')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-3 mb-3">
@@ -90,8 +98,6 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label for="estado_civil" class="form-label">Estado Civil <span class="text-danger">*</span></label>
-                            {{-- ===================== CORRECCIÓN CLAVE ===================== --}}
-                            {{-- Se ajustan las opciones para que coincidan con la base de datos --}}
                             <select class="form-select @error('estado_civil') is-invalid @enderror" id="estado_civil" name="estado_civil" required>
                                 <option value="" disabled>Seleccione...</option>
                                 <option value="soltero" {{ old('estado_civil', $adultoMayor->estado_civil) == 'soltero' ? 'selected' : '' }}>Soltero/a</option>
@@ -125,26 +131,36 @@
 
                     <h4 class="mb-4 text-primary"><i class="fe fe-activity me-2"></i>Datos Específicos del Adulto Mayor</h4>
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="discapacidad" class="form-label">Tipo de Discapacidad (si aplica)</label>
-                            <input type="text" class="form-control @error('discapacidad') is-invalid @enderror" id="discapacidad" name="discapacidad" value="{{ old('discapacidad', $adultoMayor->discapacidad) }}">
+                        <div class="col-md-6 mb-3">
+                            <label for="discapacidad" class="form-label">Discapacidades o Condiciones Especiales</label>
+                            <textarea class="form-control @error('discapacidad') is-invalid @enderror" id="discapacidad" name="discapacidad" rows="3">{{ old('discapacidad', $adultoMayor->discapacidad) }}</textarea>
                             @error('discapacidad')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="vive_con" class="form-label">¿Con quién vive?</label>
-                            <input type="text" class="form-control @error('vive_con') is-invalid @enderror" id="vive_con" name="vive_con" value="{{ old('vive_con', $adultoMayor->vive_con) }}">
+                            <textarea class="form-control @error('vive_con') is-invalid @enderror" id="vive_con" name="vive_con" rows="3">{{ old('vive_con', $adultoMayor->vive_con) }}</textarea>
                             @error('vive_con')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="migrante" class="form-label">¿Es Migrante?</label>
-                            <select class="form-select @error('migrante') is-invalid @enderror" id="migrante" name="migrante">
-                                <option value="">Seleccione...</option>
-                                <option value="1" {{ old('migrante', $adultoMayor->migrante) == '1' ? 'selected' : '' }}>Sí</option>
-                                <option value="0" {{ old('migrante', $adultoMayor->migrante) == '0' ? 'selected' : '' }}>No</option>
+                            <label for="migrante" class="form-label">Situación Migratoria <span class="text-danger">*</span></label>
+                            <select class="form-select @error('migrante') is-invalid @enderror" id="migrante" name="migrante" required>
+                                <option value="0" {{ old('migrante', $adultoMayor->migrante) == '0' ? 'selected' : '' }}>No es migrante</option>
+                                <option value="1" {{ old('migrante', $adultoMayor->migrante) == '1' ? 'selected' : '' }}>Es migrante</option>
                             </select>
                             @error('migrante')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+                        
+                        <!-- Campo condicional para el origen del migrante -->
+                        <div class="col-md-8 mb-3" id="origen_migracion_wrapper" style="display: none;">
+                            <label for="origen_migracion" class="form-label">Lugar de Origen (Migración) <span class="text-danger" id="origen_migracion_asterisk" style="display: none;">*</span></label>
+                            <input type="text" class="form-control @error('origen_migracion') is-invalid @enderror" id="origen_migracion" name="origen_migracion" value="{{ old('origen_migracion', $adultoMayor->origen_migracion) }}" placeholder="País, Departamento o Ciudad">
+                            @error('origen_migracion')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="nro_caso" class="form-label">Número de Caso (si aplica)</label>
@@ -153,7 +169,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="fecha" class="form-label">Fecha de Registro (Adulto Mayor) <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control @error('fecha') is-invalid @enderror" id="fecha" name="fecha" value="{{ old('fecha', $adultoMayor->fecha_registro_am ?? $adultoMayor->fecha) }}" required>
+                            <input type="date" class="form-control @error('fecha') is-invalid @enderror" id="fecha" name="fecha" value="{{ old('fecha', \Carbon\Carbon::parse($adultoMayor->fecha_registro_am ?? $adultoMayor->fecha)->format('Y-m-d')) }}" required>
                             @error('fecha')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
@@ -183,3 +199,41 @@
     }
 </style>
 @endpush
+
+{{-- ========================================================================= --}}
+{{-- === INICIO: SCRIPT PARA CAMPO CONDICIONAL === --}}
+{{-- ========================================================================= --}}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const migranteSelect = document.getElementById('migrante');
+    const origenMigracionWrapper = document.getElementById('origen_migracion_wrapper');
+    const origenMigracionInput = document.getElementById('origen_migracion');
+    const origenMigracionAsterisk = document.getElementById('origen_migracion_asterisk');
+
+    function toggleOrigenMigracion() {
+        if (!migranteSelect || !origenMigracionWrapper || !origenMigracionInput || !origenMigracionAsterisk) {
+            return;
+        }
+
+        if (migranteSelect.value === '1') { // '1' para "Es migrante"
+            origenMigracionWrapper.style.display = 'block';
+            origenMigracionInput.required = true;
+            origenMigracionAsterisk.style.display = 'inline';
+        } else {
+            origenMigracionWrapper.style.display = 'none';
+            origenMigracionInput.required = false;
+            // En edición, no limpiamos el valor para no perder datos si el usuario se equivoca y revierte la selección.
+        }
+    }
+
+    if (migranteSelect) {
+        migranteSelect.addEventListener('change', toggleOrigenMigracion);
+        toggleOrigenMigracion(); // Llamada inicial para establecer el estado correcto al cargar la página
+    }
+});
+</script>
+@endpush
+{{-- ========================================================================= --}}
+{{-- === FIN: SCRIPT PARA CAMPO CONDICIONAL === --}}
+{{-- ========================================================================= --}}

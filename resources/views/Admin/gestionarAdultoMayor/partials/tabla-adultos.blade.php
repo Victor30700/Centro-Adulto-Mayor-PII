@@ -30,18 +30,27 @@
                     <td>{{ $adulto->telefono }}</td>
                     <td>{{ $adulto->domicilio }}</td>
                     <td class="text-center">
-                        {{-- Botón para Editar --}}
-                        <a href="{{ route('gestionar-adultomayor.editar', $adulto->ci) }}" class="btn btn-sm btn-primary btn-action" data-bs-toggle="tooltip" title="Editar">
-                            <i class="fe fe-edit"></i>
-                        </a>
+                        <div class="btn-group" role="group" aria-label="Acciones de registro">
+                            <a href="{{ route('gestionar-adultomayor.editar', $adulto->ci) }}" class="btn btn-sm btn-primary btn-action" data-bs-toggle="tooltip" title="Editar">
+                                <i class="fe fe-edit"></i>
+                            </a>
 
-                        {{-- Botón para Eliminar (que activa SweetAlert2) --}}
-                        <button type="button" class="btn btn-sm btn-danger btn-action btn-eliminar" 
-                                data-ci="{{ $adulto->ci }}"
-                                data-nombre="{{ $adulto->nombres }} {{ $adulto->primer_apellido }}"
-                                data-bs-toggle="tooltip" title="Eliminar">
-                            <i class="fe fe-trash-2"></i>
-                        </button>
+                            {{-- ========================================================================= --}}
+                            {{-- === INICIO: CAMBIO DE SEGURIDAD POR ROL === --}}
+                            {{-- ========================================================================= --}}
+                            {{-- El botón de eliminar solo se muestra si el usuario es 'admin' --}}
+                            @if(optional(Auth::user()->rol)->nombre_rol === 'admin')
+                                <button type="button" class="btn btn-sm btn-danger btn-action btn-eliminar" 
+                                        data-ci="{{ $adulto->ci }}"
+                                        data-nombre="{{ $adulto->nombres }} {{ $adulto->primer_apellido }}"
+                                        data-bs-toggle="tooltip" title="Eliminar">
+                                    <i class="fe fe-trash-2"></i>
+                                </button>
+                            @endif
+                            {{-- ========================================================================= --}}
+                            {{-- === FIN: CAMBIO DE SEGURIDAD POR ROL === --}}
+                            {{-- ========================================================================= --}}
+                        </div>
                     </td>
                 </tr>
             @empty
@@ -57,5 +66,7 @@
 
 {{-- Paginación --}}
 <div class="d-flex justify-content-center mt-3">
-    {{ $adultosMayores->links() }}
+    @if ($adultosMayores->hasPages())
+        {{ $adultosMayores->links() }}
+    @endif
 </div>
