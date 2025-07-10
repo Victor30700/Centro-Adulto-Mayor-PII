@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Fisioterapia;
+use App\Models\Kinesiologia;
 use App\Models\AdultoMayor;
 use App\Models\HistoriaClinica;
-use App\Models\Kinesiologia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,20 +31,23 @@ use PhpOffice\PhpWord\Style\Cell;
 class ReporteFisioKineController extends Controller
 {
     /**
-     * Muestra el listado de Fichas de Fisioterapia registradas (el reporte).
+     * Muestra el listado de Fichas de Fisioterapia registradas con filtros.
      *
      * @param Request $request
      * @return \Illuminate\View\View
      */
     public function indexReporteFisio(Request $request)
     {
+        // 1. Obtener todos los valores de los filtros desde la petición.
         $search = $request->input('search');
-        $fichasFisioterapia = collect(); // Inicializar con una colección vacía
-        $totalFichasFisioterapia = Fisioterapia::count();
+        $mes = $request->input('mes');
+        $anio = $request->input('anio');
 
         try {
+            // 2. Iniciar la consulta base con las relaciones necesarias para optimizar.
             $query = Fisioterapia::with('adulto.persona', 'usuario.persona');
 
+            // 3. Aplicar filtro de búsqueda general si existe.
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('motivo_consulta', 'like', '%' . $search . '%')
@@ -52,24 +55,49 @@ class ReporteFisioKineController extends Controller
                       ->orWhereHas('adulto.persona', function ($qr) use ($search) {
                           $qr->where('nombres', 'like', '%' . $search . '%')
                              ->orWhere('primer_apellido', 'like', '%' . $search . '%')
+                             ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
                              ->orWhere('ci', 'like', '%' . $search . '%');
-                      })
-                      ->orWhereHas('usuario.persona', function ($qr) use ($search) {
-                          $qr->where('nombres', 'like', '%' . $search . '%')
-                             ->orWhere('primer_apellido', 'like', '%' . $search . '%');
                       });
                 });
             }
 
-            $fichasFisioterapia = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+            // 4. Aplicar filtro por mes si se ha seleccionado uno.
+            if ($mes) {
+                $query->whereMonth('fecha_programacion', $mes);
+            }
+
+            // 5. Aplicar filtro por año si se ha seleccionado uno.
+            if ($anio) {
+                $query->whereYear('fecha_programacion', $anio);
+            }
+
+            // 6. Obtener la lista de años únicos para el menú desplegable del filtro.
+            $years = Fisioterapia::selectRaw('EXTRACT(YEAR FROM fecha_programacion) as year')
+                ->whereNotNull('fecha_programacion')
+                ->distinct()
+                ->orderBy('year', 'desc')
+                ->pluck('year');
+
+            // 7. Paginar los resultados y ordenar por fecha más reciente.
+            $fichasFisioterapia = $query->orderBy('fecha_programacion', 'desc')->paginate(10)->appends($request->query());
+            
+            // 8. Contar el total de fichas (sin filtros) para la tarjeta de resumen.
+            $totalFichasFisioterapia = Fisioterapia::count();
+
+            // 9. Devolver la vista con todas las variables necesarias.
+            return view('Medico.indexRepFisio', compact(
+                'fichasFisioterapia', 
+                'totalFichasFisioterapia', 
+                'search', 
+                'years', 
+                'mes', 
+                'anio'
+            ));
 
         } catch (\Exception $e) {
             Log::error('Error en ReporteFisioKineController@indexReporteFisio: ' . $e->getMessage(), ['exception' => $e]);
-            return view('Medico.indexRepFisio', compact('fichasFisioterapia', 'search', 'totalFichasFisioterapia'))
-                         ->with('error', 'Ocurrió un error al cargar las fichas de fisioterapia. Por favor, intente de nuevo más tarde.');
+            return back()->with('error', 'Ocurrió un error al cargar las fichas de fisioterapia. Por favor, intente de nuevo más tarde.');
         }
-
-        return view('Medico.indexRepFisio', compact('fichasFisioterapia', 'search', 'totalFichasFisioterapia'));
     }
 
     /**
@@ -110,21 +138,16 @@ class ReporteFisioKineController extends Controller
     public function exportarFichaFisioWordIndividual(int $cod_fisio)
     {
         try {
-            // Cargar la ficha de fisioterapia con sus relaciones necesarias
             $fichaFisio = Fisioterapia::with('adulto.persona', 'historiaClinica', 'usuario.persona')->findOrFail($cod_fisio);
-            
-            // Acceso simplificado a los datos relacionados
             $adulto = $fichaFisio->adulto;
             $persona = optional($adulto)->persona;
             $historiaClinica = $fichaFisio->historiaClinica; 
             $usuarioRegistro = optional($fichaFisio->usuario)->persona;
 
             $phpWord = new PhpWord();
-            // La línea que causaba el error ha sido eliminada.
             
             $section = $phpWord->addSection(['marginLeft' => 720, 'marginRight' => 720, 'marginTop' => 720, 'marginBottom' => 720]);
 
-            // --- Estilos de fuente ---
             $phpWord->addFontStyle('headerStyle', ['name' => 'Calibri', 'size' => 10, 'bold' => true, 'color' => '1A3C34']);
             $phpWord->addFontStyle('cityHeaderStyle', ['name' => 'Calibri', 'size' => 12, 'bold' => true, 'color' => '1A3C34']);
             $phpWord->addFontStyle('mainTitleStyle', ['name' => 'Calibri', 'size' => 16, 'bold' => true, 'color' => '1A3C34']);
@@ -136,7 +159,6 @@ class ReporteFisioKineController extends Controller
             $phpWord->addFontStyle('normalText', ['name' => 'Calibri', 'size' => 10, 'color' => '333333']);
             $phpWord->addFontStyle('footerStyle', ['name' => 'Calibri', 'size' => 9, 'color' => '666666']);
 
-            // --- Estilos de párrafo ---
             $phpWord->addParagraphStyle('P_Center', ['alignment' => 'center', 'spaceAfter' => 100, 'spaceBefore' => 100]);
             $phpWord->addParagraphStyle('P_Left', ['alignment' => 'left', 'spaceAfter' => 80, 'spaceBefore' => 80]);
             $phpWord->addParagraphStyle('P_Right', ['alignment' => 'right', 'spaceAfter' => 80, 'spaceBefore' => 80]);
@@ -144,71 +166,35 @@ class ReporteFisioKineController extends Controller
             $phpWord->addParagraphStyle('P_NoSpace', ['spaceAfter' => 0, 'spaceBefore' => 0]);
             $phpWord->addParagraphStyle('P_SectionSpace', ['spaceAfter' => 300, 'spaceBefore' => 200]);
 
-            // --- Estilos de tabla y celda ---
-            $tableStyle = [
-                'borderColor' => 'B0B0B0',
-                'borderSize' => 6,
-                'cellMargin' => 100,
-                'alignment' => 'center',
-                'width' => 10000,
-                'unit' => TblWidth::TWIP,
-            ];
+            $tableStyle = ['borderColor' => 'B0B0B0', 'borderSize' => 6, 'cellMargin' => 100, 'alignment' => 'center', 'width' => 10000, 'unit' => TblWidth::TWIP];
             $phpWord->addTableStyle('mainTableStyle', $tableStyle);
 
-            $sectionHeaderCellStyle = [
-                'valign' => VerticalJc::CENTER,
-                'bgColor' => 'F5F6F5',
-                'borderBottomSize' => 12,
-                'borderBottomColor' => '1A3C34',
-            ];
-            $phpWord->addTableStyle('sectionHeaderTableStyle', [
-                'borderColor' => 'B0B0B0',
-                'borderSize' => 6,
-                'cellMargin' => 100,
-                'alignment' => 'center',
-                'width' => 10000,
-                'unit' => TblWidth::TWIP,
-            ]);
+            $sectionHeaderCellStyle = ['valign' => VerticalJc::CENTER, 'bgColor' => 'F5F6F5', 'borderBottomSize' => 12, 'borderBottomColor' => '1A3C34'];
+            $phpWord->addTableStyle('sectionHeaderTableStyle', ['borderColor' => 'B0B0B0', 'borderSize' => 6, 'cellMargin' => 100, 'alignment' => 'center', 'width' => 10000, 'unit' => TblWidth::TWIP]);
 
-            $cellStyleNoBorder = [
-                'borderSize' => 0,
-                'cellMargin' => 80,
-                'valign' => VerticalJc::CENTER,
-            ];
-            $phpWord->addTableStyle('noBorderTableStyle', [
-                'borderSize' => 0,
-                'cellMargin' => 80,
-                'alignment' => 'left',
-                'width' => 10000,
-                'unit' => TblWidth::TWIP,
-            ]);
+            $cellStyleNoBorder = ['borderSize' => 0, 'cellMargin' => 80, 'valign' => VerticalJc::CENTER];
+            $phpWord->addTableStyle('noBorderTableStyle', ['borderSize' => 0, 'cellMargin' => 80, 'alignment' => 'left', 'width' => 10000, 'unit' => TblWidth::TWIP]);
 
-            // --- Encabezado del Documento ---
             $header = $section->addHeader();
             $headerTable = $header->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
-
             $headerTable->addRow();
             $cellTitles = $headerTable->addCell(10000, ['valign' => VerticalJc::CENTER]);
             $cellTitles->addText('ALCALDÍA DE TARIJA', 'cityHeaderStyle', 'P_Center');
             $cellTitles->addText('CENTRO DE ATENCIÓN MUNICIPAL DEL ADULTO MAYOR ' . Carbon::now()->year, 'headerStyle', 'P_Center');
             $header->addTextBreak(1);
 
-            // --- Pie de Página ---
             $footer = $section->addFooter();
             $footerTable = $footer->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
             $footerTable->addRow();
             $footerTable->addCell(10000)->addPreserveText('Página {PAGE} de {NUMPAGES}', 'footerStyle', 'P_Center');
 
-            // --- Contenido del Documento ---
             $section->addTextBreak(1);
             $section->addText('FICHA DE INGRESO DEL ADULTO MAYOR EN EL CTAM', 'mainTitleStyle', 'P_Center');
             $section->addTextBreak(2);
 
-            // --- I. DATOS PERSONALES DEL ADULTO MAYOR ---
             $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
             $sectionHeaderTable->addRow();
-            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
-                ->addText('I. DATOS PERSONALES DEL ADULTO MAYOR', 'sectionTitleStyle', 'P_Left');
+            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)->addText('I. DATOS PERSONALES DEL ADULTO MAYOR', 'sectionTitleStyle', 'P_Left');
             $section->addTextBreak(1);
 
             $tablePersonal = $section->addTable('noBorderTableStyle');
@@ -240,11 +226,9 @@ class ReporteFisioKineController extends Controller
             $addRow($tablePersonal, 'NÚMEROS DE EMERGENCIA', optional($fichaFisio)->num_emergencia ?? 'N/A');
             $section->addTextBreak(2);
 
-            // --- II. SITUACIÓN DE SALUD ---
             $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
             $sectionHeaderTable->addRow();
-            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
-                ->addText('II. SITUACIÓN DE SALUD', 'sectionTitleStyle', 'P_Left');
+            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)->addText('II. SITUACIÓN DE SALUD', 'sectionTitleStyle', 'P_Left');
             $section->addTextBreak(1);
 
             $tableSalud = $section->addTable('noBorderTableStyle');
@@ -252,27 +236,21 @@ class ReporteFisioKineController extends Controller
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('ENFERMEDADES', 'labelStyle', 'P_NoSpace');
             $enfermedadesActuales = mb_strtoupper(optional($fichaFisio)->enfermedades_actuales ?? '');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'HIPERTENSIÓN ARTERIAL') !== false ? 'X' : ' ') . ') HIPERTENSIÓN ARTERIAL', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'DIABETES') !== false ? 'X' : ' ') . ') DIABETES', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'ARTROSIS') !== false ? 'X' : ' ') . ') ARTROSIS', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'OSTEOPOROSIS') !== false ? 'X' : ' ') . ') OSTEOPOROSIS', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'PARKINSON') !== false ? 'X' : ' ') . ') PARKINSON', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($enfermedadesActuales, 'NO REFIERE') !== false ? 'X' : ' ') . ') NO REFIERE', 'checkboxStyle', 'P_Indent');
-
             $tableSalud->addRow(400);
             $tableSalud->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableSalud->addCell(6500, $cellStyleNoBorder)->addText('OTRAS: ' . (empty($enfermedadesActuales) ? 'N/A' : $enfermedadesActuales), 'valueStyle', 'P_Indent');
@@ -283,15 +261,12 @@ class ReporteFisioKineController extends Controller
             $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('ALERGIAS', 'labelStyle', 'P_NoSpace');
             $alergias = mb_strtoupper(optional($fichaFisio)->alergias ?? '');
             $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'MEDICAMENTOS') !== false ? 'X' : ' ') . ') MEDICAMENTOS: ' . (mb_strpos($alergias, 'MEDICAMENTOS') !== false ? mb_strtoupper($fichaFisio->alergias) : 'N/A'), 'checkboxStyle', 'P_Indent');
-
             $tableAlergias->addRow(400);
             $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'ALIMENTOS') !== false ? 'X' : ' ') . ') ALIMENTOS: ' . (mb_strpos($alergias, 'ALIMENTOS') !== false ? mb_strtoupper($fichaFisio->alergias) : 'N/A'), 'checkboxStyle', 'P_Indent');
-
             $tableAlergias->addRow(400);
             $tableAlergias->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($alergias, 'NO REFIERE') !== false ? 'X' : ' ') . ') NO REFIERE', 'checkboxStyle', 'P_Indent');
-
             $otherAlergias = '';
             if (!empty($fichaFisio->alergias)) {
                 if (mb_strpos($alergias, 'MEDICAMENTOS') === false && mb_strpos($alergias, 'ALIMENTOS') === false && mb_strpos($alergias, 'NO REFIERE') === false) {
@@ -303,23 +278,17 @@ class ReporteFisioKineController extends Controller
             $tableAlergias->addCell(6500, $cellStyleNoBorder)->addText('OTRAS: ' . (empty($otherAlergias) ? 'N/A' : mb_strtoupper($otherAlergias)), 'valueStyle', 'P_Indent');
             $section->addTextBreak(2);
 
-            // --- III. PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL ---
             $sectionHeaderTable = $section->addTable('sectionHeaderTableStyle');
             $sectionHeaderTable->addRow();
-            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)
-                ->addText('III. PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL (FISIOTERAPIA)', 'sectionTitleStyle', 'P_Left');
+            $sectionHeaderTable->addCell(10000, $sectionHeaderCellStyle)->addText('III. PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL (FISIOTERAPIA)', 'sectionTitleStyle', 'P_Left');
             $section->addTextBreak(1);
 
             $tablePlan = $section->addTable('noBorderTableStyle');
             $addRow($tablePlan, 'ATENCIÓN FISIOTERAPIA', '');
             $addRow($tablePlan, 'FECHA DE PROGRAMACIÓN', (optional($fichaFisio->fecha_programacion)->format('d/m/Y') ?? 'N/A'));
-            
-            // --- INICIO: CAMPOS AGREGADOS ---
             $addRow($tablePlan, 'FECHA DE INICIO', (optional($fichaFisio->fecha_inicio)->format('d/m/Y') ?? 'N/A'));
             $addRow($tablePlan, 'FECHA DE FIN', (optional($fichaFisio->fecha_fin)->format('d/m/Y') ?? 'N/A'));
             $addRow($tablePlan, 'NÚMERO DE SESIONES', $fichaFisio->numero_sesiones ?? 'N/A');
-            // --- FIN: CAMPOS AGREGADOS ---
-
             $addRow($tablePlan, 'MOTIVO DE CONSULTA', mb_strtoupper($fichaFisio->motivo_consulta ?? 'N/A'));
             $addRow($tablePlan, 'SOLICITUD ATENCIÓN', mb_strtoupper($fichaFisio->solicitud_atencion ?? 'N/A'));
             $section->addTextBreak(1);
@@ -329,11 +298,9 @@ class ReporteFisioKineController extends Controller
             $tableEquipos->addCell(3500, $cellStyleNoBorder)->addText('EQUIPOS', 'labelStyle', 'P_NoSpace');
             $equiposFisio = mb_strtoupper(optional($fichaFisio)->equipos ?? '');
             $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($equiposFisio, 'ELECTRO ESTIMULADOR') !== false ? 'X' : ' ') . ') ELECTRO ESTIMULADOR', 'checkboxStyle', 'P_Indent');
-
             $tableEquipos->addRow(400);
             $tableEquipos->addCell(3500, $cellStyleNoBorder)->addText('', 'labelStyle', 'P_NoSpace');
             $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('(' . (mb_strpos($equiposFisio, 'ULTRASONIDO') !== false ? 'X' : ' ') . ') ULTRASONIDO', 'checkboxStyle', 'P_Indent');
-
             $otrosEquipos = [];
             $equiposArray = array_map('trim', explode(',', optional($fichaFisio)->equipos ?? ''));
             foreach ($equiposArray as $equipo) {
@@ -347,7 +314,6 @@ class ReporteFisioKineController extends Controller
             $tableEquipos->addCell(6500, $cellStyleNoBorder)->addText('OTROS: ' . (!empty($otrosEquipos) ? implode(', ', $otrosEquipos) : 'N/A'), 'valueStyle', 'P_Indent');
             $section->addTextBreak(3);
 
-            // --- Firmas ---
             $signatureTable = $section->addTable(['width' => 10000, 'unit' => TblWidth::TWIP]);
             $signatureTable->addRow();
             $signatureTable->addCell(5000, $cellStyleNoBorder)->addText('____________________________', 'normalText', 'P_Center');
@@ -360,9 +326,7 @@ class ReporteFisioKineController extends Controller
             $section->addText('REGISTRADO POR: ' . mb_strtoupper(optional($usuarioRegistro)->nombres ?? 'N/A') . ' ' . mb_strtoupper(optional($usuarioRegistro)->primer_apellido ?? 'N/A'), 'normalText', 'P_Center');
             $section->addText('FECHA DE REGISTRO: ' . (optional($fichaFisio)->created_at ? Carbon::parse($fichaFisio->created_at)->format('d/m/Y H:i') : 'N/A'), 'normalText', 'P_Center');
 
-            // Prepare the file for download
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-
             $nombreAdulto = mb_strtoupper((optional($persona)->nombres ?? '') . '_' . (optional($persona)->primer_apellido ?? ''));
             $fileName = 'FICHA_FISIOTERAPIA_' . $fichaFisio->cod_fisio . '_' . $nombreAdulto . '_' . Carbon::now()->format('Ymd') . '.docx';
             $fileName = str_replace([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
@@ -386,7 +350,7 @@ class ReporteFisioKineController extends Controller
 
     // ###########################################################################################################################
     // REPORTES KINESIOLOGIA
-        // --- MÉTODOS PARA KINESIOLOGÍA ---
+    // --- MÉTODOS PARA KINESIOLOGÍA ---
 
     /**
      * Muestra el listado de Fichas de Kinesiología registradas (el reporte).
@@ -396,37 +360,54 @@ class ReporteFisioKineController extends Controller
      */
     public function indexReporteKine(Request $request)
     {
+        // --- INICIO DE LA MEJORA ---
         $search = $request->input('search');
-        $fichasKinesiologia = collect(); // Inicializar con una colección vacía
-        $totalFichasKinesiologia = Kinesiologia::count();
+        $mes = $request->input('mes');
+        $anio = $request->input('anio');
 
         try {
-            $query = Kinesiologia::with('adulto.persona', 'usuario.persona');
+            $query = Kinesiologia::with(['adulto.persona', 'usuario.persona']);
 
             if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->orWhereHas('adulto.persona', function ($qr) use ($search) {
-                            $qr->where('nombres', 'like', '%' . $search . '%')
-                               ->orWhere('primer_apellido', 'like', '%' . $search . '%')
-                               ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
-                               ->orWhere('ci', 'like', '%' . $search . '%');
-                        })
-                        ->orWhereHas('usuario.persona', function ($qr) use ($search) {
-                            $qr->where('nombres', 'like', '%' . $search . '%')
-                               ->orWhere('primer_apellido', 'like', '%' . $search . '%');
-                        });
+                $query->whereHas('adulto.persona', function ($qr) use ($search) {
+                    $qr->where('nombres', 'like', '%' . $search . '%')
+                       ->orWhere('primer_apellido', 'like', '%' . $search . '%')
+                       ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
+                       ->orWhere('ci', 'like', '%' . $search . '%');
                 });
             }
 
+            if ($mes) {
+                $query->whereMonth('created_at', $mes);
+            }
+
+            if ($anio) {
+                $query->whereYear('created_at', $anio);
+            }
+            
+            $years = Kinesiologia::selectRaw('EXTRACT(YEAR FROM created_at) as year')
+                ->whereNotNull('created_at')
+                ->distinct()
+                ->orderBy('year', 'desc')
+                ->pluck('year');
+
             $fichasKinesiologia = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+            $totalFichasKinesiologia = Kinesiologia::count();
+
+            return view('Medico.indexRepKine', compact(
+                'fichasKinesiologia', 
+                'totalFichasKinesiologia', 
+                'search',
+                'years',
+                'mes',
+                'anio'
+            ));
 
         } catch (\Exception $e) {
             Log::error('Error en ReporteFisioKineController@indexReporteKine: ' . $e->getMessage(), ['exception' => $e]);
-            return view('Medico.indexRepKine', compact('fichasKinesiologia', 'search', 'totalFichasKinesiologia'))
-                                ->with('error', 'Ocurrió un error al cargar las fichas de kinesiología. Por favor, intente de nuevo más tarde.');
+            return back()->with('error', 'Ocurrió un error al cargar las fichas de kinesiología.');
         }
-
-        return view('Medico.indexRepKine', compact('fichasKinesiologia', 'search', 'totalFichasKinesiologia'));
+        // --- FIN DE LA MEJORA ---
     }
 
     /**
@@ -438,7 +419,6 @@ class ReporteFisioKineController extends Controller
     public function editKine($cod_kine)
     {
         try {
-            // Asegúrate de cargar historiaClinica aquí también
             $kinesiologia = Kinesiologia::with('adulto.persona', 'historiaClinica')->findOrFail($cod_kine);
             $adulto = $kinesiologia->adulto;
             $historiaClinica = $kinesiologia->historiaClinica;
@@ -459,7 +439,6 @@ class ReporteFisioKineController extends Controller
      */
     public function updateKine(Request $request, $cod_kine)
     {
-        // Validación solo para los campos específicos de Kinesiología (booleanos)
         $request->validate([
             'entrenamiento_funcional' => 'boolean',
             'gimnasio_maquina' => 'boolean',
@@ -484,7 +463,7 @@ class ReporteFisioKineController extends Controller
 
             DB::commit();
 
-            return redirect()->route('reportekine.index')->with('success', 'Ficha de Kinesiología actualizada exitosamente.');
+            return redirect()->route('responsable.kinesiologia.reportekine.index')->with('success', 'Ficha de Kinesiología actualizada exitosamente.');
 
         } catch (ValidationException $e) {
             DB::rollBack();
@@ -506,7 +485,6 @@ class ReporteFisioKineController extends Controller
     public function showKine($cod_kine)
     {
         try {
-            // Asegurarse de cargar historiaClinica aquí también
             $kinesiologia = Kinesiologia::with('adulto.persona', 'historiaClinica', 'usuario.persona')->findOrFail($cod_kine);
             return view('Medico.verDetallesKine', compact('kinesiologia'));
         } catch (\Exception $e) {
@@ -526,7 +504,7 @@ class ReporteFisioKineController extends Controller
         try {
             $kinesiologia = Kinesiologia::findOrFail($cod_kine);
             $kinesiologia->delete();
-            return redirect()->route('reportekine.index')->with('success', 'Ficha de Kinesiología eliminada exitosamente.');
+            return redirect()->route('responsable.kinesiologia.reportekine.index')->with('success', 'Ficha de Kinesiología eliminada exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error al eliminar Ficha de Kinesiología: ' . $e->getMessage(), ['cod_kine' => $cod_kine, 'exception' => $e]);
             return back()->with('error', 'Error al eliminar la Ficha de Kinesiología: ' . $e->getMessage());
@@ -542,19 +520,28 @@ class ReporteFisioKineController extends Controller
     public function exportarFichaKineExcel(Request $request)
     {
         try {
+            // --- INICIO DE LA MEJORA ---
             $search = $request->input('search');
+            $mes = $request->input('mes');
+            $anio = $request->input('anio');
+            
             $query = Kinesiologia::with('adulto.persona', 'historiaClinica', 'usuario.persona');
 
             if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('adulto.persona', function ($qr) use ($search) {
-                        $qr->where('nombres', 'like', '%' . $search . '%')
-                           ->orWhere('primer_apellido', 'like', '%' . $search . '%')
-                           ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
-                           ->orWhere('ci', 'like', '%' . $search . '%');
-                    });
+                $query->whereHas('adulto.persona', function ($qr) use ($search) {
+                    $qr->where('nombres', 'like', '%' . $search . '%')
+                       ->orWhere('primer_apellido', 'like', '%' . $search . '%')
+                       ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
+                       ->orWhere('ci', 'like', '%' . $search . '%');
                 });
             }
+            if ($mes) {
+                $query->whereMonth('created_at', $mes);
+            }
+            if ($anio) {
+                $query->whereYear('created_at', $anio);
+            }
+            // --- FIN DE LA MEJORA ---
 
             $fichasKinesiologia = $query->orderBy('created_at', 'asc')->get();
 

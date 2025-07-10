@@ -29,26 +29,17 @@ class ReporteMedicoController extends Controller
      */
     public function index(Request $request)
     {
-        $fecha_inicio = $request->input('fecha_inicio');
-        $fecha_fin = $request->input('fecha_fin');
+        // --- INICIO DE LA MEJORA ---
         $search = $request->input('search');
-
-        $totalAdultos = AdultoMayor::count();
-        $reportes = collect(); 
-        $totalFichasEnfermeria = 0; 
+        $mes = $request->input('mes');
+        $anio = $request->input('anio');
 
         try {
-            $query = Enfermeria::with('adulto.persona', 'usuario.persona');
+            $totalAdultos = AdultoMayor::count();
+            $totalFichasEnfermeria = Enfermeria::count();
 
-            // Aplicar filtros de fecha
-            if ($fecha_inicio) {
-                $query->whereDate('created_at', '>=', $fecha_inicio);
-            }
-            if ($fecha_fin) {
-                $query->whereDate('created_at', '<=', $fecha_fin);
-            }
+            $query = Enfermeria::with('adulto.persona', 'usuario.persona')->whereNotNull('created_at');
 
-            // Aplicar búsqueda general
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('presion_arterial', 'like', '%' . $search . '%')
@@ -59,24 +50,43 @@ class ReporteMedicoController extends Controller
                              ->orWhere('primer_apellido', 'like', '%' . $search . '%')
                              ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
                              ->orWhere('ci', 'like', '%' . $search . '%');
-                      })
-                      ->orWhereHas('usuario.persona', function ($qr) use ($search) {
-                          $qr->where('nombres', 'like', '%' . $search . '%')
-                             ->orWhere('primer_apellido', 'like', '%' . $search . '%');
                       });
                 });
             }
 
+            if ($mes) {
+                $query->whereMonth('created_at', $mes);
+            }
+            if ($anio) {
+                $query->whereYear('created_at', $anio);
+            }
+
+            $years = Enfermeria::selectRaw('EXTRACT(YEAR FROM created_at) as year')
+                ->whereNotNull('created_at')
+                ->distinct()
+                ->orderBy('year', 'desc')
+                ->pluck('year');
+
             $reportes = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
-            $totalFichasEnfermeria = Enfermeria::count(); 
             
+            return view('Medico.indexRep', compact(
+                'reportes', 'search', 'mes', 'anio', 'years', 'totalAdultos', 'totalFichasEnfermeria'
+            ));
+
         } catch (\Exception $e) {
             Log::error('Error en ReporteMedicoController@index (Enfermería): ' . $e->getMessage(), ['exception' => $e]);
-            return view('Medico.indexRep', compact('reportes', 'fecha_inicio', 'fecha_fin', 'search', 'totalAdultos', 'totalFichasEnfermeria', 'request'))
-                        ->with('error', 'Ocurrió un error al cargar los reportes de enfermería. Por favor, intente de nuevo más tarde.');
-        }
+            
+            // Corrección del bloque catch para evitar el error 500
+            $reportes = collect();
+            $years = collect();
+            $totalAdultos = AdultoMayor::count();
+            $totalFichasEnfermeria = Enfermeria::count();
 
-        return view('Medico.indexRep', compact('reportes', 'fecha_inicio', 'fecha_fin', 'search', 'totalAdultos', 'totalFichasEnfermeria', 'request'));
+            return view('Medico.indexRep', compact(
+                'reportes', 'search', 'mes', 'anio', 'years', 'totalAdultos', 'totalFichasEnfermeria'
+            ))->with('error', 'Ocurrió un error al cargar los reportes. Por favor, intente de nuevo.');
+        }
+        // --- FIN DE LA MEJORA ---
     }
 
     /**
@@ -174,313 +184,24 @@ class ReporteMedicoController extends Controller
      */
     public function exportarAtencionesEnfermeriaExcel(Request $request)
     {
-        $fecha_inicio = $request->input('fecha_inicio');
-        $fecha_fin = $request->input('fecha_fin');
+        // --- INICIO DE LA MEJORA ---
         $search = $request->input('search');
-
-        $query = Enfermeria::with('adulto.persona', 'usuario.persona');
-
-        // Aplicar los mismos filtros que en la vista principal
-        if ($fecha_inicio) {
-            $query->whereDate('created_at', '>=', $fecha_inicio);
-        }
-        if ($fecha_fin) {
-            $query->whereDate('created_at', '<=', $fecha_fin);
-        }
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('presion_arterial', 'like', '%' . $search . '%')
-                    ->orWhere('temperatura', 'like', '%' . $search . '%')
-                    ->orWhere('derivacion', 'like', '%' . $search . '%')
-                    ->orWhere('lavado_oidos', 'like', '%' . $search . '%')
-                    ->orWhere('orientacion_tratamiento', 'like', '%' . $search . '%')
-                    ->orWhere('adm_medicamentos', 'like', '%' . $search . '%')
-                    ->orWhere('curacion', 'like', '%' . $search . '%') // Añadido para búsqueda
-                    ->orWhereHas('adulto.persona', function ($qr) use ($search) {
-                        $qr->where('nombres', 'like', '%' . $search . '%')
-                            ->orWhere('primer_apellido', 'like', '%' . $search . '%')
-                            ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
-                            ->orWhere('ci', 'like', '%' . $search . '%');
-                    })
-                    ->orWhereHas('usuario.persona', function ($qr) use ($search) {
-                        $qr->where('nombres', 'like', '%' . $search . '%')
-                            ->orWhere('primer_apellido', 'like', '%' . $search . '%');
-                    });
-            });
-        }
-
-        $atenciones = $query->orderBy('created_at', 'asc')->get();
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Atenciones Enfermería');
-
-        // --- Título del documento ---
-        Carbon::setLocale('es'); // Asegura que el nombre del mes sea en español
-        $monthName = Carbon::now()->locale('es')->monthName;
-        if ($fecha_fin) {
-            $monthName = Carbon::parse($fecha_fin)->locale('es')->monthName;
-        }
-        
-        $sheet->mergeCells('A1:S1');
-        $sheet->setCellValue('A1', 'GOBIERNO AUTÓNOMO MUNICIPAL DE TARIJA');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->mergeCells('A2:S2');
-        $sheet->setCellValue('A2', 'OFICINA DEL ADULTO MAYOR');
-        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
-        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->mergeCells('A3:S3');
-        $sheet->setCellValue('A3', 'PLANILLA DE ATENCIÓN DE ENFERMERÍA CORRESPONDIENTE AL MES DE ' . mb_strtoupper($monthName));
-        $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(12);
-        $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->getRowDimension(4)->setRowHeight(15); 
-
-        // --- Encabezados de la tabla (filas 5, 6, 7) ---
-        // Columnas fijas
-        $sheet->mergeCells('A5:A7');
-        $sheet->setCellValue('A5', 'Nº');
-
-        $sheet->mergeCells('B5:B7');
-        $sheet->setCellValue('B5', 'NOMBRES Y APELLIDOS');
-
-        $sheet->mergeCells('C5:D6');
-        $sheet->setCellValue('C5', 'SEXO');
-        $sheet->setCellValue('C7', 'F');
-        $sheet->setCellValue('D7', 'M');
-
-        $sheet->mergeCells('E5:E7');
-        $sheet->setCellValue('E5', 'EDAD');
-
-        // Sección "ATENCIÓN DE ENFERMERÍA"
-        $sheet->mergeCells('F5:Q5');
-        $sheet->setCellValue('F5', 'ATENCIÓN DE ENFERMERÍA');
-
-        // Sub-sección "CONTROL SIGNOS VITALES"
-        $sheet->mergeCells('F6:J6');
-        $sheet->setCellValue('F6', 'CONTROL SIGNOS VITALES');
-        $sheet->setCellValue('F7', 'PRESIÓN ARTERIAL'); // No vertical
-        $sheet->setCellValue('G7', 'FRECUENCIA CARDÍACA');
-        $sheet->setCellValue('H7', 'FRECUENCIA RESPIRATORIA');
-        $sheet->setCellValue('I7', 'PULSO');
-        $sheet->setCellValue('J7', 'TEMPERATURA');
-
-        // Columnas verticales individuales dentro de ATENCION DE ENFERMERIA
-        $sheet->mergeCells('K6:K7');
-        $sheet->setCellValue('K6', 'CONTROL DE OXIMETRIA');
-
-        $sheet->mergeCells('L6:L7');
-        $sheet->setCellValue('L6', 'INYECTABLES');
-
-        $sheet->mergeCells('M6:M7');
-        $sheet->setCellValue('M6', 'PESO Y TALLA');
-
-        $sheet->mergeCells('N6:N7');
-        $sheet->setCellValue('N6', 'ORIENTACIÓN ALIMENTACIÓN');
-
-        $sheet->mergeCells('O6:O7');
-        $sheet->setCellValue('O6', 'LAVADO DE OÍDO');
-
-        $sheet->mergeCells('P6:P7');
-        $sheet->setCellValue('P6', 'CURACIÓN');
-
-        $sheet->mergeCells('Q6:Q7');
-        $sheet->setCellValue('Q6', 'MEDICAMENTOS'); // Nombre del encabezado según imagen, el dato es adm_medicamentos
-
-        // Columna "DERIVACIÓN"
-        $sheet->mergeCells('R5:R7');
-        $sheet->setCellValue('R5', 'DERIVACIÓN');
-
-        // Columna "FIRMA"
-        $sheet->mergeCells('S5:S7');
-        $sheet->setCellValue('S5', 'FIRMA');
-
-        // --- Aplicar estilos a los encabezados de la tabla (filas 5, 6, 7) ---
-        $sheet->getStyle('A5:S7')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 10], 
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'wrapText' => true, 
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['argb' => 'FF000000'],
-                ],
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'color' => ['argb' => 'FFE0E0E0'], 
-            ],
-        ]);
-        
-        // Colores de relleno específicos para secciones
-        $sheet->getStyle('C5:D6')->getFill()->getStartColor()->setARGB('FFD0D0D0'); 
-        $sheet->getStyle('F6:J6')->getFill()->getStartColor()->setARGB('FFD0D0D0'); 
-
-        // Alineación específica para las columnas F y M (Sexo)
-        $sheet->getStyle('C7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('D7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        // --- Configurar la orientación del texto vertical ---
-        $verticalColumns = ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
-        foreach ($verticalColumns as $column) {
-            $sheet->getStyle($column . '7')->getAlignment()->setTextRotation(90);
-            $sheet->getStyle($column . '6')->getAlignment()->setTextRotation(90); // Para los encabezados de dos filas como K6
-        }
-        $sheet->getStyle('R5')->getAlignment()->setTextRotation(90); // Derivacion
-        $sheet->getStyle('S5')->getAlignment()->setTextRotation(90); // Firma
-
-        // --- Ajustar anchos de columna para acomodar texto vertical ---
-        foreach (range('A', 'S') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-        $sheet->getColumnDimension('B')->setWidth(35); // Nombres y Apellidos
-        $sheet->getColumnDimension('F')->setWidth(15); // Presión Arterial
-        $sheet->getColumnDimension('G')->setWidth(4);  // Frecuencia Cardíaca (ajustado para vertical)
-        $sheet->getColumnDimension('H')->setWidth(4);  // Frecuencia Respiratoria (ajustado para vertical)
-        $sheet->getColumnDimension('I')->setWidth(4);  // Pulso (ajustado para vertical)
-        $sheet->getColumnDimension('J')->setWidth(4);  // Temperatura (ajustado para vertical)
-        $sheet->getColumnDimension('K')->setWidth(4);  // Control de Oximetría (ajustado para vertical)
-        $sheet->getColumnDimension('L')->setWidth(4);  // Inyectables (ajustado para vertical)
-        $sheet->getColumnDimension('M')->setWidth(4);  // Peso y Talla (ajustado para vertical)
-        $sheet->getColumnDimension('N')->setWidth(4);  // Orientación Alimentación (ajustado para vertical)
-        $sheet->getColumnDimension('O')->setWidth(4);  // Lavado de Oído (ajustado para vertical)
-        $sheet->getColumnDimension('P')->setWidth(4);  // Curación (ajustado para vertical)
-        $sheet->getColumnDimension('Q')->setWidth(4);  // Medicamentos (ajustado para vertical)
-        $sheet->getColumnDimension('R')->setWidth(4);  // Derivación (ajustado para vertical)
-        $sheet->getColumnDimension('S')->setWidth(4);  // Firma (ajustado para vertical)
-
-
-        // Llenar datos (APLICANDO mb_strtoupper() A LOS CAMPOS DE TEXTO)
-        $currentRow = 8; 
-        foreach ($atenciones as $index => $atencion) {
-            $adulto = $atencion->adulto;
-            $persona = $adulto->persona;
-
-            $sheet->setCellValue('A' . $currentRow, $index + 1);
-            $sheet->setCellValue('B' . $currentRow, mb_strtoupper(trim(
-                ($persona->nombres ?? '') . ' ' .
-                ($persona->primer_apellido ?? '') . ' ' .
-                ($persona->segundo_apellido ?? '')
-            )));
-            $sheet->setCellValue('C' . $currentRow, ($persona->sexo == 'F' ? 'X' : ''));
-            $sheet->setCellValue('D' . $currentRow, ($persona->sexo == 'M' ? 'X' : ''));
-            $sheet->setCellValue('E' . $currentRow, ($persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : ''));
-            
-            // Datos de Atención de Enfermería (mapeados a las columnas según la imagen)
-            $sheet->setCellValue('F' . $currentRow, mb_strtoupper($atencion->presion_arterial ?? ''));
-            $sheet->setCellValue('G' . $currentRow, mb_strtoupper($atencion->frecuencia_cardiaca ?? ''));
-            $sheet->setCellValue('H' . $currentRow, mb_strtoupper($atencion->frecuencia_respiratoria ?? ''));
-            $sheet->setCellValue('I' . $currentRow, mb_strtoupper($atencion->pulso ?? ''));
-            $sheet->setCellValue('J' . $currentRow, mb_strtoupper($atencion->temperatura ?? ''));
-            $sheet->setCellValue('K' . $currentRow, mb_strtoupper($atencion->control_oximetria ?? ''));
-            $sheet->setCellValue('L' . $currentRow, mb_strtoupper($atencion->inyectables ?? ''));
-            $sheet->setCellValue('M' . $currentRow, mb_strtoupper($atencion->peso_talla ?? ''));
-            $sheet->setCellValue('N' . $currentRow, mb_strtoupper($atencion->orientacion_alimentacion ?? ''));
-            $sheet->setCellValue('O' . $currentRow, mb_strtoupper($atencion->lavado_oidos ?? ''));
-            $sheet->setCellValue('P' . $currentRow, mb_strtoupper($atencion->curacion ?? ''));
-            $sheet->setCellValue('Q' . $currentRow, mb_strtoupper($atencion->adm_medicamentos ?? ''));
-            $sheet->setCellValue('R' . $currentRow, mb_strtoupper($atencion->derivacion ?? ''));
-            $sheet->setCellValue('S' . $currentRow, ''); // Columna de firma vacía
-
-            $currentRow++;
-        }
-
-        $dataRowsCount = count($atenciones);
-        if ($dataRowsCount > 0) {
-            $sheet->getStyle('A8:S' . ($currentRow - 1))->applyFromArray([ // Ajustado el rango a 'S'
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['argb' => 'FF000000'],
-                    ],
-                ],
-                'alignment' => [
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                ],
-            ]);
-            $sheet->getStyle('B8:B' . ($currentRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT); // Alineación izquierda para nombres
-        }
-
-        // --- Firmas al final (ajustadas para reflejar la nueva estructura y columnas) ---
-        $currentRow += 3;
-        $sheet->setCellValue('D' . $currentRow, '____________________________');
-        $sheet->getStyle('D' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->mergeCells('D' . ($currentRow + 1) . ':G' . ($currentRow + 1));
-        $sheet->setCellValue('D' . ($currentRow + 1), 'FIRMA ADULTO MAYOR');
-        $sheet->getStyle('D' . ($currentRow + 1))->applyFromArray([
-            'font' => ['bold' => true, 'size' => 10],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        $sheet->setCellValue('I' . $currentRow, '____________________________');
-        $sheet->getStyle('I' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->mergeCells('I' . ($currentRow + 1) . ':L' . ($currentRow + 1));
-        $sheet->setCellValue('I' . ($currentRow + 1), 'FIRMA ENFERMER@');
-        $sheet->getStyle('I' . ($currentRow + 1))->applyFromArray([
-            'font' => ['bold' => true, 'size' => 10],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        $sheet->setCellValue('N' . $currentRow, '____________________________');
-        $sheet->getStyle('N' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->mergeCells('N' . ($currentRow + 1) . ':Q' . ($currentRow + 1)); // Ajustado a Q para que sea coherente con la imagen
-        $sheet->setCellValue('N' . ($currentRow + 1), 'FIRMA ENCARGAD@ OF. ADULTO MAYOR');
-        $sheet->getStyle('N' . ($currentRow + 1))->applyFromArray([
-            'font' => ['bold' => true, 'size' => 10],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'Reporte_Atenciones_Enfermeria_' . Carbon::now()->format('Ymd_His') . '.xlsx';
-
-        return response()->streamDownload(function() use ($writer) {
-            $writer->save('php://output');
-        }, $fileName, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment;filename="' . $fileName . '"',
-            'Cache-Control' => 'max-age=0',
-        ]);
-    }
-
-    /**
-     * Muestra el listado de Historias Clínicas con filtros y buscador.
-     *
-     * @param Request $request
-     * @return \Illuminate\View\View
-     */
-    public function indexHistoriaClinica(Request $request)
-    {
-        $fecha_inicio = $request->input('fecha_inicio');
-        $fecha_fin = $request->input('fecha_fin');
-        $search = $request->input('search');
-
-        $totalAdultos = AdultoMayor::count();
-        $historiasClinicas = collect();
-        $totalHistoriasClinicas = 0;
+        $mes = $request->input('mes');
+        $anio = $request->input('anio');
 
         try {
-            $query = HistoriaClinica::with('adulto.persona', 'usuario.persona');
+            $query = Enfermeria::with('adulto.persona', 'usuario.persona')->whereNotNull('created_at');
 
-            // Aplicar filtros de fecha
-            if ($fecha_inicio) {
-                $query->whereDate('created_at', '>=', $fecha_inicio);
-            }
-            if ($fecha_fin) {
-                $query->whereDate('created_at', '<=', $fecha_fin);
-            }
-
-            // Aplicar búsqueda general
+            // Aplicar los mismos filtros que en la vista principal
             if ($search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('motivo_consulta', 'like', '%' . $search . '%')
-                      ->orWhere('diagnostico_medico', 'like', '%' . $search . '%')
+                    $q->where('presion_arterial', 'like', '%' . $search . '%')
+                      ->orWhere('temperatura', 'like', '%' . $search . '%')
+                      ->orWhere('derivacion', 'like', '%' . $search . '%')
+                      ->orWhere('lavado_oidos', 'like', '%' . $search . '%')
+                      ->orWhere('orientacion_tratamiento', 'like', '%' . $search . '%')
+                      ->orWhere('adm_medicamentos', 'like', '%' . $search . '%')
+                      ->orWhere('curacion', 'like', '%' . $search . '%')
                       ->orWhereHas('adulto.persona', function ($qr) use ($search) {
                           $qr->where('nombres', 'like', '%' . $search . '%')
                              ->orWhere('primer_apellido', 'like', '%' . $search . '%')
@@ -494,16 +215,219 @@ class ReporteMedicoController extends Controller
                 });
             }
 
-            $historiasClinicas = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+            if ($mes) {
+                $query->whereMonth('created_at', $mes);
+            }
+            if ($anio) {
+                $query->whereYear('created_at', $anio);
+            }
+
+            $atenciones = $query->orderBy('created_at', 'asc')->get();
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Atenciones Enfermería');
+
+            Carbon::setLocale('es');
+            $monthName = $mes ? Carbon::create()->month($mes)->locale('es')->monthName : 'TODOS LOS MESES';
+            $yearName = $anio ?? Carbon::now()->year;
+            
+            $sheet->mergeCells('A1:S1');
+            $sheet->setCellValue('A1', 'GOBIERNO AUTÓNOMO MUNICIPAL DE TARIJA');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->mergeCells('A2:S2');
+            $sheet->setCellValue('A2', 'OFICINA DEL ADULTO MAYOR');
+            $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->mergeCells('A3:S3');
+            $sheet->setCellValue('A3', 'PLANILLA DE ATENCIÓN DE ENFERMERÍA CORRESPONDIENTE A ' . mb_strtoupper($monthName) . ' ' . $yearName);
+            $sheet->getStyle('A3')->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->getRowDimension(4)->setRowHeight(15); 
+
+            // --- Encabezados de la tabla (filas 5, 6, 7) ---
+            $sheet->mergeCells('A5:A7'); $sheet->setCellValue('A5', 'Nº');
+            $sheet->mergeCells('B5:B7'); $sheet->setCellValue('B5', 'NOMBRES Y APELLIDOS');
+            $sheet->mergeCells('C5:D6'); $sheet->setCellValue('C5', 'SEXO');
+            $sheet->setCellValue('C7', 'F'); $sheet->setCellValue('D7', 'M');
+            $sheet->mergeCells('E5:E7'); $sheet->setCellValue('E5', 'EDAD');
+            $sheet->mergeCells('F5:Q5'); $sheet->setCellValue('F5', 'ATENCIÓN DE ENFERMERÍA');
+            $sheet->mergeCells('F6:J6'); $sheet->setCellValue('F6', 'CONTROL SIGNOS VITALES');
+            $sheet->setCellValue('F7', 'PRESIÓN ARTERIAL');
+            $sheet->setCellValue('G7', 'FRECUENCIA CARDÍACA');
+            $sheet->setCellValue('H7', 'FRECUENCIA RESPIRATORIA');
+            $sheet->setCellValue('I7', 'PULSO');
+            $sheet->setCellValue('J7', 'TEMPERATURA');
+            $sheet->mergeCells('K6:K7'); $sheet->setCellValue('K6', 'CONTROL DE OXIMETRIA');
+            $sheet->mergeCells('L6:L7'); $sheet->setCellValue('L6', 'INYECTABLES');
+            $sheet->mergeCells('M6:M7'); $sheet->setCellValue('M6', 'PESO Y TALLA');
+            $sheet->mergeCells('N6:N7'); $sheet->setCellValue('N6', 'ORIENTACIÓN ALIMENTACIÓN');
+            $sheet->mergeCells('O6:O7'); $sheet->setCellValue('O6', 'LAVADO DE OÍDO');
+            $sheet->mergeCells('P6:P7'); $sheet->setCellValue('P6', 'CURACIÓN');
+            $sheet->mergeCells('Q6:Q7'); $sheet->setCellValue('Q6', 'MEDICAMENTOS');
+            $sheet->mergeCells('R5:R7'); $sheet->setCellValue('R5', 'DERIVACIÓN');
+            $sheet->mergeCells('S5:S7'); $sheet->setCellValue('S5', 'FIRMA');
+
+            $sheet->getStyle('A5:S7')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 10], 
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['argb' => 'FFE0E0E0']],
+            ]);
+            
+            $sheet->getStyle('C5:D6')->getFill()->getStartColor()->setARGB('FFD0D0D0'); 
+            $sheet->getStyle('F6:J6')->getFill()->getStartColor()->setARGB('FFD0D0D0'); 
+
+            $sheet->getStyle('C7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('D7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $verticalColumns = ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
+            foreach ($verticalColumns as $column) {
+                if ($sheet->getCell($column . '7')->getValue()) { $sheet->getStyle($column . '7')->getAlignment()->setTextRotation(90); }
+                if ($sheet->getCell($column . '6')->getValue() && !$sheet->getCell($column . '7')->getValue()) { $sheet->getStyle($column . '6')->getAlignment()->setTextRotation(90); }
+                if ($sheet->getCell($column . '5')->getValue() && !$sheet->getCell($column . '6')->getValue()) { $sheet->getStyle($column . '5')->getAlignment()->setTextRotation(90); }
+            }
+
+            foreach (range('A', 'S') as $column) { $sheet->getColumnDimension($column)->setAutoSize(true); }
+            $sheet->getColumnDimension('B')->setWidth(35);
+            $sheet->getColumnDimension('F')->setWidth(15);
+            foreach (range('G', 'S') as $column) { $sheet->getColumnDimension($column)->setWidth(5); }
+
+            $currentRow = 8; 
+            foreach ($atenciones as $index => $atencion) {
+                $adulto = $atencion->adulto;
+                $persona = $adulto->persona;
+                $sheet->setCellValue('A' . $currentRow, $index + 1);
+                $sheet->setCellValue('B' . $currentRow, mb_strtoupper(trim(($persona->nombres ?? '') . ' ' . ($persona->primer_apellido ?? '') . ' ' . ($persona->segundo_apellido ?? ''))));
+                $sheet->setCellValue('C' . $currentRow, ($persona->sexo == 'F' ? 'X' : ''));
+                $sheet->setCellValue('D' . $currentRow, ($persona->sexo == 'M' ? 'X' : ''));
+                $sheet->setCellValue('E' . $currentRow, ($persona->fecha_nacimiento ? Carbon::parse($persona->fecha_nacimiento)->age : ''));
+                $sheet->setCellValue('F' . $currentRow, mb_strtoupper($atencion->presion_arterial ?? ''));
+                $sheet->setCellValue('G' . $currentRow, mb_strtoupper($atencion->frecuencia_cardiaca ?? ''));
+                $sheet->setCellValue('H' . $currentRow, mb_strtoupper($atencion->frecuencia_respiratoria ?? ''));
+                $sheet->setCellValue('I' . $currentRow, mb_strtoupper($atencion->pulso ?? ''));
+                $sheet->setCellValue('J' . $currentRow, mb_strtoupper($atencion->temperatura ?? ''));
+                $sheet->setCellValue('K' . $currentRow, mb_strtoupper($atencion->control_oximetria ?? ''));
+                $sheet->setCellValue('L' . $currentRow, mb_strtoupper($atencion->inyectables ?? ''));
+                $sheet->setCellValue('M' . $currentRow, mb_strtoupper($atencion->peso_talla ?? ''));
+                $sheet->setCellValue('N' . $currentRow, mb_strtoupper($atencion->orientacion_alimentacion ?? ''));
+                $sheet->setCellValue('O' . $currentRow, mb_strtoupper($atencion->lavado_oidos ?? ''));
+                $sheet->setCellValue('P' . $currentRow, mb_strtoupper($atencion->curacion ?? ''));
+                $sheet->setCellValue('Q' . $currentRow, mb_strtoupper($atencion->adm_medicamentos ?? ''));
+                $sheet->setCellValue('R' . $currentRow, mb_strtoupper($atencion->derivacion ?? ''));
+                $sheet->setCellValue('S' . $currentRow, '');
+                $currentRow++;
+            }
+
+            if (count($atenciones) > 0) {
+                $sheet->getStyle('A8:S' . ($currentRow - 1))->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+                $sheet->getStyle('B8:B' . ($currentRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            }
+
+            $currentRow += 3;
+            $sheet->setCellValue('D' . $currentRow, '____________________________');
+            $sheet->getStyle('D' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->mergeCells('D' . ($currentRow + 1) . ':G' . ($currentRow + 1));
+            $sheet->setCellValue('D' . ($currentRow + 1), 'FIRMA ADULTO MAYOR');
+            $sheet->getStyle('D' . ($currentRow + 1))->applyFromArray(['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+
+            $sheet->setCellValue('I' . $currentRow, '____________________________');
+            $sheet->getStyle('I' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->mergeCells('I' . ($currentRow + 1) . ':L' . ($currentRow + 1));
+            $sheet->setCellValue('I' . ($currentRow + 1), 'FIRMA ENFERMER@');
+            $sheet->getStyle('I' . ($currentRow + 1))->applyFromArray(['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+
+            $sheet->setCellValue('N' . $currentRow, '____________________________');
+            $sheet->getStyle('N' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->mergeCells('N' . ($currentRow + 1) . ':Q' . ($currentRow + 1));
+            $sheet->setCellValue('N' . ($currentRow + 1), 'FIRMA ENCARGAD@ OF. ADULTO MAYOR');
+            $sheet->getStyle('N' . ($currentRow + 1))->applyFromArray(['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]]);
+
+            $writer = new Xlsx($spreadsheet);
+            $fileName = 'Reporte_Atenciones_Enfermeria_' . Carbon::now()->format('Ymd_His') . '.xlsx';
+
+            return response()->streamDownload(function() use ($writer) {
+                $writer->save('php://output');
+            }, $fileName);
+
+        } catch (\Exception $e) {
+            Log::error('Error al generar Excel del Reporte de Enfermería: ' . $e->getMessage(), ['exception' => $e]);
+            return back()->with('error', 'Error al generar el Excel: ' . $e->getMessage());
+        }
+        // --- FIN DE LA MEJORA ---
+    }
+    /**
+     * Muestra el listado de Historias Clínicas con filtros y buscador.
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+public function indexHistoriaClinica(Request $request)
+    {
+        // --- INICIO DE LA MEJORA ---
+        $search = $request->input('search');
+        $mes = $request->input('mes');
+        $anio = $request->input('anio');
+
+        try {
+            $totalAdultos = AdultoMayor::count();
             $totalHistoriasClinicas = HistoriaClinica::count();
+
+            $query = HistoriaClinica::with('adulto.persona', 'usuario.persona')->whereNotNull('created_at');
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('motivo_consulta', 'like', '%' . $search . '%')
+                      ->orWhere('diagnostico_medico', 'like', '%' . $search . '%')
+                      ->orWhereHas('adulto.persona', function ($qr) use ($search) {
+                          $qr->where('nombres', 'like', '%' . $search . '%')
+                             ->orWhere('primer_apellido', 'like', '%' . $search . '%')
+                             ->orWhere('segundo_apellido', 'like', '%' . $search . '%')
+                             ->orWhere('ci', 'like', '%' . $search . '%');
+                      });
+                });
+            }
+
+            if ($mes) {
+                $query->whereMonth('created_at', $mes);
+            }
+            if ($anio) {
+                $query->whereYear('created_at', $anio);
+            }
+
+            $years = HistoriaClinica::selectRaw('EXTRACT(YEAR FROM created_at) as year')
+                ->whereNotNull('created_at')
+                ->distinct()
+                ->orderBy('year', 'desc')
+                ->pluck('year');
+
+            $historiasClinicas = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+            
+            return view('Medico.indexRepHis', compact(
+                'historiasClinicas', 'search', 'mes', 'anio', 'years', 'totalAdultos', 'totalHistoriasClinicas'
+            ));
             
         } catch (\Exception $e) {
             Log::error('Error en ReporteMedicoController@indexHistoriaClinica: ' . $e->getMessage(), ['exception' => $e]);
-            return view('Medico.indexRepHis', compact('historiasClinicas', 'fecha_inicio', 'fecha_fin', 'search', 'totalAdultos', 'totalHistoriasClinicas', 'request'))
-                        ->with('error', 'Ocurrió un error al cargar los reportes de historia clínica. Por favor, intente de nuevo más tarde.');
+            
+            // Corrección del bloque catch
+            $historiasClinicas = collect();
+            $years = collect();
+            $totalAdultos = AdultoMayor::count();
+            $totalHistoriasClinicas = HistoriaClinica::count();
+            
+            return view('Medico.indexRepHis', compact(
+                'historiasClinicas', 'search', 'mes', 'anio', 'years', 'totalAdultos', 'totalHistoriasClinicas'
+            ))->with('error', 'Ocurrió un error al cargar las historias clínicas.');
         }
-
-        return view('Medico.indexRepHis', compact('historiasClinicas', 'fecha_inicio', 'fecha_fin', 'search', 'totalAdultos', 'totalHistoriasClinicas', 'request'));
+        // --- FIN DE LA MEJORA ---
     }
 
     /**
