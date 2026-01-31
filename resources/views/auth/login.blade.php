@@ -118,11 +118,6 @@
         required
       ><br>
 
-      <div style="text-align: left; margin-bottom: 15px;">
-        <input type="checkbox" name="remember" id="remember">
-        <label for="remember">Validar los datos</label>
-      </div>
-
       <button type="submit">Iniciar sesión</button>
     </form>
 

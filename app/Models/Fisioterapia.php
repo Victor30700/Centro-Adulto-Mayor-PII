@@ -4,15 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. AÑADIR ESTA LÍNEA
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Fisioterapia extends Model
 {
-    use HasFactory, SoftDeletes; // <-- 2. AÑADIR 'SoftDeletes' AQUÍ
+    use HasFactory, SoftDeletes;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'fisioterapia';
+
+    /**
+     * The primary key associated with the table.
+     *
+     * @var string
+     */
     protected $primaryKey = 'cod_fisio';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'id_adulto',
         'id_historia',
@@ -21,17 +37,30 @@ class Fisioterapia extends Model
         'enfermedades_actuales',
         'alergias',
         'fecha_programacion',
+        'fecha_inicio',
+        'fecha_fin',
+        'numero_sesiones',
         'motivo_consulta',
         'solicitud_atencion',
         'equipos',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'fecha_programacion' => 'date',
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
-     * Relación con AdultoMayor.
+     * Get the adult mayor that owns the physiotherapy record.
      */
     public function adulto()
     {
@@ -39,7 +68,7 @@ class Fisioterapia extends Model
     }
 
     /**
-     * Relación con HistoriaClinica (opcional).
+     * Get the clinical history associated with the physiotherapy record.
      */
     public function historiaClinica()
     {
@@ -47,7 +76,7 @@ class Fisioterapia extends Model
     }
 
     /**
-     * Relación con User (quien registra).
+     * Get the user who created the physiotherapy record.
      */
     public function usuario()
     {

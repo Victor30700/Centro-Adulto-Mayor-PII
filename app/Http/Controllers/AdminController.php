@@ -122,7 +122,7 @@ class AdminController extends Controller
             'domicilio' => 'required|string|max:255',
             'telefono' => 'required|string|max:20',
             'zona_comunidad' => 'nullable|string|max:100',
-            'area_especialidad_legal' => 'required|string|in:Derecho,Psicologia,Trabajo-Social,otro',
+            'area_especialidad_legal' => 'required|string|in:Derecho,Psicologia,Asistente Social,otro',
 
             // Pestaña 2: Datos de Usuario (tabla 'users')
             'id_rol' => 'required|integer|exists:rol,id_rol',

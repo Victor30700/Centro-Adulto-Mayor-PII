@@ -183,7 +183,6 @@ class ReporteProteccionController extends Controller
             $phpWord->addParagraphStyle('P_Textarea', ['spaceAfter' => 180]); 
             $phpWord->addParagraphStyle('P_TableCell', ['spaceAfter' => 0, 'spaceBefore' => 0, 'alignment' => Jc::CENTER]); // Estilo para centrar el texto en las celdas
 
-
             // --- Encabezado del Documento (Logo y Títulos de Gobierno) ---
             $header = $section->addHeader();
             $tableHeader = $header->addTable(['width' => 9500, 'unit' => TblWidth::TWIP]); // Usamos TWIP
@@ -248,7 +247,6 @@ class ReporteProteccionController extends Controller
                 $section->addText('No se encontraron datos personales para este adulto mayor.', 'valueStyle', 'P_Start');
             }
             $section->addTextBreak(2);
-
 
             // --- TAB 1: Actividad Laboral Remunerada --- (Coincide con II. en el DOC)
             $section->addText('II. ACTIVIDAD LABORAL REMUNERADA DE LA PERSONA ADULTA MAYOR', 'sectionTitleStyle', 'P_Start');
@@ -426,6 +424,21 @@ class ReporteProteccionController extends Controller
                 $section->addText('No se registró información del croquis.', 'valueStyle', 'P_Start');
             }
             $section->addTextBreak(2);
+            // --- Firmas --- (Coincide con Firmas del Documento)
+            $tableFirmas = $section->addTable([
+                'borderColor' => 'FFFFFF',
+                'borderSize' => 0,
+                'cellMargin' => 0,
+                'alignment' => Jc::CENTER,
+                'width' => 9500, // Ancho total en TWIP
+                'unit' => TblWidth::TWIP,
+            ]);
+
+            $tableFirmas->addRow();
+            $tableFirmas->addCell(4750)->addText('__________________________________', 'valueStyle', 'P_Center'); // 50%
+            $tableFirmas->addRow();
+            $tableFirmas->addCell(4750)->addText('FIRMA DEL ADULTO MAYOR', 'signatureStyle', 'P_Center');
+            $tableFirmas->addRow();
 
             // --- TAB 6: Seguimiento del Caso --- (Coincide con V. en el DOC)
             $section->addText('V. SEGUIMIENTO DEL CASO:', 'sectionTitleStyle', 'P_Start');
@@ -445,7 +458,6 @@ class ReporteProteccionController extends Controller
                 $tableSeguimientos->addCell(2660, ['bgColor' => 'DDDDDD'])->addText('Acción Realizada', 'labelStyle', 'P_TableCell'); // 28% -> 2660 TWIP
                 $tableSeguimientos->addCell(2660, ['bgColor' => 'DDDDDD'])->addText('Resultado Obtenido', 'labelStyle', 'P_TableCell'); // 28% -> 2660 TWIP
                 $tableSeguimientos->addCell(2755, ['bgColor' => 'DDDDDD'])->addText('Nombre del/la Funcionario(a) que Realizo la Acción', 'labelStyle', 'P_TableCell'); // 29% -> 2755 TWIP
-
 
                 foreach ($seguimientos as $index => $seguimiento) {
                     $tableSeguimientos->addRow();
@@ -490,45 +502,22 @@ class ReporteProteccionController extends Controller
             $section->addText('ANEXO AL NUMERAL III.', 'sectionTitleStyle', 'P_Start');
             $anexosN3 = optional($adulto)->anexoN3;
             if ($anexosN3 && $anexosN3->count() > 0) {
-                 // Crear tabla para Anexo III
-                $tableAnexo3 = $section->addTable([
-                    'width' => 9500, // Usamos TWIP
-                    'unit' => TblWidth::TWIP, 
-                    'borderSize' => 6, 
-                    'borderColor' => '000000',
-                    'cellMargin' => 80
-                ]);
-                $tableAnexo3->addRow();
-                // Calcular anchos en TWIP
-                $tableAnexo3->addCell(475, ['bgColor' => 'DDDDDD'])->addText('N°', 'labelStyle', 'P_TableCell'); // 5% -> 475
-                $tableAnexo3->addCell(855, ['bgColor' => 'DDDDDD'])->addText('Primer Apellido', 'labelStyle', 'P_TableCell'); // 9% -> 855
-                $tableAnexo3->addCell(855, ['bgColor' => 'DDDDDD'])->addText('Segundo Apellido', 'labelStyle', 'P_TableCell'); // 9% -> 855
-                $tableAnexo3->addCell(950, ['bgColor' => 'DDDDDD'])->addText('Nombres', 'labelStyle', 'P_TableCell'); // 10% -> 950
-                $tableAnexo3->addCell(380, ['bgColor' => 'DDDDDD'])->addText('Sexo', 'labelStyle', 'P_TableCell'); // 4% -> 380
-                $tableAnexo3->addCell(380, ['bgColor' => 'DDDDDD'])->addText('Edad', 'labelStyle', 'P_TableCell'); // 4% -> 380
-                $tableAnexo3->addCell(760, ['bgColor' => 'DDDDDD'])->addText('CI', 'labelStyle', 'P_TableCell'); // 8% -> 760
-                $tableAnexo3->addCell(760, ['bgColor' => 'DDDDDD'])->addText('Teléfono', 'labelStyle', 'P_TableCell'); // 8% -> 760
-                $tableAnexo3->addCell(1140, ['bgColor' => 'DDDDDD'])->addText('Dirección Domicilio (Comunidad)', 'labelStyle', 'P_TableCell'); // 12% -> 1140
-                $tableAnexo3->addCell(950, ['bgColor' => 'DDDDDD'])->addText('Relación/Parentesco', 'labelStyle', 'P_TableCell'); // 10% -> 950
-                $tableAnexo3->addCell(1045, ['bgColor' => 'DDDDDD'])->addText('Dirección de Trabajo', 'labelStyle', 'P_TableCell'); // 11% -> 1045
-                $tableAnexo3->addCell(950, ['bgColor' => 'DDDDDD'])->addText('Ocupación', 'labelStyle', 'P_TableCell'); // 10% -> 950
-
                 foreach ($anexosN3 as $index => $anexo3) {
                     $personaNaturalAnexo3 = optional($anexo3)->personaNatural; 
                     if ($personaNaturalAnexo3) {
-                        $tableAnexo3->addRow();
-                        $tableAnexo3->addCell(475)->addText($index + 1, 'valueStyle', 'P_TableCell');
-                        $tableAnexo3->addCell(855)->addText(optional($personaNaturalAnexo3)->primer_apellido ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(855)->addText(optional($personaNaturalAnexo3)->segundo_apellido ?? '', 'valueStyle');
-                        $tableAnexo3->addCell(950)->addText(optional($personaNaturalAnexo3)->nombres ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(380)->addText(optional($personaNaturalAnexo3)->sexo == 'M' ? 'M' : (optional($personaNaturalAnexo3)->sexo == 'F' ? 'F' : 'N/A'), 'valueStyle', 'P_TableCell');
-                        $tableAnexo3->addCell(380)->addText(optional($personaNaturalAnexo3)->edad ?? 'N/A', 'valueStyle', 'P_TableCell');
-                        $tableAnexo3->addCell(760)->addText(optional($personaNaturalAnexo3)->ci ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(760)->addText(optional($personaNaturalAnexo3)->telefono ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(1140)->addText(optional($personaNaturalAnexo3)->direccion_domicilio ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(950)->addText(optional($personaNaturalAnexo3)->relacion_parentesco ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(1045)->addText(optional($personaNaturalAnexo3)->direccion_de_trabajo ?? 'N/A', 'valueStyle');
-                        $tableAnexo3->addCell(950)->addText(optional($personaNaturalAnexo3)->ocupacion ?? 'N/A', 'valueStyle');
+                        $section->addText('Registro N° ' . ($index + 1) . ':', 'subSectionTitleStyle', 'P_Start');
+                        $section->addText('Primer Apellido: ' . (optional($personaNaturalAnexo3)->primer_apellido ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Segundo Apellido: ' . (optional($personaNaturalAnexo3)->segundo_apellido ?? ''), 'valueStyle', 'P_Indent');
+                        $section->addText('Nombres: ' . (optional($personaNaturalAnexo3)->nombres ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Sexo: ' . (optional($personaNaturalAnexo3)->sexo == 'M' ? 'M' : (optional($personaNaturalAnexo3)->sexo == 'F' ? 'F' : 'N/A')), 'valueStyle', 'P_Indent');
+                        $section->addText('Edad: ' . (optional($personaNaturalAnexo3)->edad ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('CI: ' . (optional($personaNaturalAnexo3)->ci ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Teléfono: ' . (optional($personaNaturalAnexo3)->telefono ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Dirección Domicilio (Comunidad): ' . (optional($personaNaturalAnexo3)->direccion_domicilio ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Relación/Parentesco: ' . (optional($personaNaturalAnexo3)->relacion_parentesco ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Dirección de Trabajo: ' . (optional($personaNaturalAnexo3)->direccion_de_trabajo ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addText('Ocupación: ' . (optional($personaNaturalAnexo3)->ocupacion ?? 'N/A'), 'valueStyle', 'P_Indent');
+                        $section->addTextBreak(1);
                     }
                 }
             } else {
@@ -586,7 +575,6 @@ class ReporteProteccionController extends Controller
             $tableFirmas->addRow();
             $tableFirmas->addCell(4750)->addText('FIRMA DEL PROFESIONAL', 'signatureStyle', 'P_Center');
             $tableFirmas->addCell(4750)->addText('FIRMA DEL USUARIO(A)', 'signatureStyle', 'P_Center');
-
 
             // Preparar el archivo para la descarga
             $objWriter = IOFactory::createWriter($phpWord, 'Word2007'); 

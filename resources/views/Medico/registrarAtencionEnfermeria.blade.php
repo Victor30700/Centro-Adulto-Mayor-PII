@@ -34,7 +34,16 @@
     </h6>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    html: '<p>{{ session('success') }}</p>',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+        </script>
     @endif
     @if($errors->any())
         <script>
@@ -90,7 +99,7 @@
                     <div class="form-group">
                         <label for="presion_arterial">Presión Arterial:</label>
                         <input type="text" id="presion_arterial" name="presion_arterial" class="form-control"
-                               value="{{ old('presion_arterial', optional($fichaEnfermeria)->presion_arterial) }}">
+                               value="{{ old('presion_arterial', optional($fichaEnfermeria)->presion_arterial ?? '-') }}">
                         @error('presion_arterial')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -98,7 +107,7 @@
                     <div class="form-group">
                         <label for="frecuencia_cardiaca">Frecuencia Cardíaca:</label>
                         <input type="text" id="frecuencia_cardiaca" name="frecuencia_cardiaca" class="form-control"
-                               value="{{ old('frecuencia_cardiaca', optional($fichaEnfermeria)->frecuencia_cardiaca) }}">
+                               value="{{ old('frecuencia_cardiaca', optional($fichaEnfermeria)->frecuencia_cardiaca ?? '-') }}">
                         @error('frecuencia_cardiaca')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -106,7 +115,7 @@
                     <div class="form-group">
                         <label for="frecuencia_respiratoria">Frecuencia Respiratoria:</label>
                         <input type="text" id="frecuencia_respiratoria" name="frecuencia_respiratoria" class="form-control"
-                               value="{{ old('frecuencia_respiratoria', optional($fichaEnfermeria)->frecuencia_respiratoria) }}">
+                               value="{{ old('frecuencia_respiratoria', optional($fichaEnfermeria)->frecuencia_respiratoria ?? '-') }}">
                         @error('frecuencia_respiratoria')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -116,7 +125,7 @@
                     <div class="form-group">
                         <label for="pulso">Pulso:</label>
                         <input type="text" id="pulso" name="pulso" class="form-control"
-                               value="{{ old('pulso', optional($fichaEnfermeria)->pulso) }}">
+                               value="{{ old('pulso', optional($fichaEnfermeria)->pulso ?? '-') }}">
                         @error('pulso')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -124,7 +133,7 @@
                     <div class="form-group">
                         <label for="temperatura">Temperatura:</label>
                         <input type="text" id="temperatura" name="temperatura" class="form-control"
-                               value="{{ old('temperatura', optional($fichaEnfermeria)->temperatura) }}">
+                               value="{{ old('temperatura', optional($fichaEnfermeria)->temperatura ?? '-') }}">
                         @error('temperatura')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -132,7 +141,7 @@
                     <div class="form-group">
                         <label for="control_oximetria">Control Oximetría:</label>
                         <input type="text" id="control_oximetria" name="control_oximetria" class="form-control"
-                               value="{{ old('control_oximetria', optional($fichaEnfermeria)->control_oximetria) }}">
+                               value="{{ old('control_oximetria', optional($fichaEnfermeria)->control_oximetria ?? '-') }}">
                         @error('control_oximetria')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -141,7 +150,7 @@
             <h5 class="mt-4">ATENCIONES DE ENFERMERÍA:</h5>
             <div class="form-group">
                 <label for="inyectables">INYECTABLES:</label>
-                <textarea id="inyectables" name="inyectables" rows="3" class="form-control">{{ old('inyectables', optional($fichaEnfermeria)->inyectables) }}</textarea>
+                <textarea id="inyectables" name="inyectables" rows="3" class="form-control">{{ old('inyectables', optional($fichaEnfermeria)->inyectables ?? '-') }}</textarea>
                 @error('inyectables')<span style="color: red;">{{ $message }}</span>@enderror
             </div>
             <div class="row">
@@ -149,14 +158,14 @@
                     <div class="form-group">
                         <label for="peso_talla">PESO Y TALLA:</label>
                         <input type="text" id="peso_talla" name="peso_talla" class="form-control"
-                               value="{{ old('peso_talla', optional($fichaEnfermeria)->peso_talla) }}">
+                               value="{{ old('peso_talla', optional($fichaEnfermeria)->peso_talla ?? '-') }}">
                         @error('peso_talla')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="orientacion_alimentacion">ORIENTACIÓN ALIMENTACIÓN:</label>
-                        <textarea id="orientacion_alimentacion" name="orientacion_alimentacion" rows="3" class="form-control">{{ old('orientacion_alimentacion', optional($fichaEnfermeria)->orientacion_alimentacion) }}</textarea>
+                        <textarea id="orientacion_alimentacion" name="orientacion_alimentacion" rows="3" class="form-control">{{ old('orientacion_alimentacion', optional($fichaEnfermeria)->orientacion_alimentacion ?? '-') }}</textarea>
                         @error('orientacion_alimentacion')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -165,14 +174,14 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="lavado_oidos">LAVADO DE OÍDOS:</label>
-                        <textarea id="lavado_oidos" name="lavado_oidos" rows="3" class="form-control">{{ old('lavado_oidos', optional($fichaEnfermeria)->lavado_oidos) }}</textarea>
+                        <textarea id="lavado_oidos" name="lavado_oidos" rows="3" class="form-control">{{ old('lavado_oidos', optional($fichaEnfermeria)->lavado_oidos ?? '-') }}</textarea>
                         @error('lavado_oidos')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="orientacion_tratamiento">ORIENTACIÓN TRATAMIENTO:</label>
-                        <textarea id="orientacion_tratamiento" name="orientacion_tratamiento" rows="3" class="form-control">{{ old('orientacion_tratamiento', optional($fichaEnfermeria)->orientacion_tratamiento) }}</textarea>
+                        <textarea id="orientacion_tratamiento" name="orientacion_tratamiento" rows="3" class="form-control">{{ old('orientacion_tratamiento', optional($fichaEnfermeria)->orientacion_tratamiento ?? '-') }}</textarea>
                         @error('orientacion_tratamiento')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -181,21 +190,21 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="curacion">CURACIÓN:</label>
-                        <textarea id="curacion" name="curacion" rows="3" class="form-control">{{ old('curacion', optional($fichaEnfermeria)->curacion) }}</textarea>
+                        <textarea id="curacion" name="curacion" rows="3" class="form-control">{{ old('curacion', optional($fichaEnfermeria)->curacion ?? '-') }}</textarea>
                         @error('curacion')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="adm_medicamentos">ADMINISTRACIÓN MEDICAMENTOS:</label>
-                        <textarea id="adm_medicamentos" name="adm_medicamentos" rows="3" class="form-control">{{ old('adm_medicamentos', optional($fichaEnfermeria)->adm_medicamentos) }}</textarea>
+                        <textarea id="adm_medicamentos" name="adm_medicamentos" rows="3" class="form-control">{{ old('adm_medicamentos', optional($fichaEnfermeria)->adm_medicamentos ?? '-') }}</textarea>
                         @error('adm_medicamentos')<span style="color: red;">{{ $message }}</span>@enderror
                     </div>
                 </div>
             </div>
             <div class="form-group">
                 <label for="derivacion">DERIVACIÓN:</label>
-                <textarea id="derivacion" name="derivacion" rows="3" class="form-control">{{ old('derivacion', optional($fichaEnfermeria)->derivacion) }}</textarea>
+                <textarea id="derivacion" name="derivacion" rows="3" class="form-control">{{ old('derivacion', optional($fichaEnfermeria)->derivacion ?? '-') }}</textarea>
                 @error('derivacion')<span style="color: red;">{{ $message }}</span>@enderror
             </div>
 
@@ -223,53 +232,63 @@
             form.addEventListener('submit', function (event) {
                 let errors = [];
 
-                // Validar Signos Vitales (todos obligatorios)
+                // Validar Signos Vitales
                 const signosVitales = [
-                    { id: 'presion_arterial', label: 'Presión Arterial', regex: /^\d{1,3}\/\d{1,3}$/, example: '120/80' },
-                    { id: 'frecuencia_cardiaca', label: 'Frecuencia Cardíaca', isNumber: true },
-                    { id: 'frecuencia_respiratoria', label: 'Frecuencia Respiratoria', isNumber: true },
-                    { id: 'pulso', label: 'Pulso', isNumber: true },
-                    { id: 'temperatura', label: 'Temperatura', regex: /^\d{1,2}(\.\d{1,2})?$/, example: '36.5' },
-                    { id: 'control_oximetria', label: 'Control Oximetría', isNumber: true }
+                    { id: 'presion_arterial', label: 'Presión Arterial', regex: /^\d{1,3}\/\d{1,3}$/, example: '120/80', maxLength: 255 },
+                    { id: 'frecuencia_cardiaca', label: 'Frecuencia Cardíaca', isNumber: true, maxLength: 255 },
+                    { id: 'frecuencia_respiratoria', label: 'Frecuencia Respiratoria', isNumber: true, maxLength: 255 },
+                    { id: 'pulso', label: 'Pulso', isNumber: true, maxLength: 255 },
+                    { id: 'temperatura', label: 'Temperatura', regex: /^\d{1,2}(\.\d{1,2})?$/, example: '36.5', maxLength: 255 },
+                    { id: 'control_oximetria', label: 'Control Oximetría', isNumber: true, maxLength: 255 }
                 ];
                 signosVitales.forEach(field => {
                     const input = document.getElementById(field.id);
-                    if (!input.value.trim()) {
-                        errors.push(`El campo "${field.label}" es obligatorio.`);
-                    } else if (field.regex && !field.regex.test(input.value.trim())) {
-                        errors.push(`El campo "${field.label}" debe tener el formato correcto (ejemplo: ${field.example}).`);
-                    } else if (field.isNumber) {
-                        const value = parseFloat(input.value.trim());
-                        if (isNaN(value) || value < 0) {
-                            errors.push(`El campo "${field.label}" debe ser un número positivo.`);
+                    const value = input.value.trim();
+                    if (value !== '' && value !== '-') {
+                        if (field.regex && !field.regex.test(value)) {
+                            errors.push(`El campo "${field.label}" debe tener el formato correcto (ejemplo: ${field.example}).`);
+                        } else if (field.isNumber) {
+                            const numValue = parseFloat(value);
+                            if (isNaN(numValue) || numValue < 0) {
+                                errors.push(`El campo "${field.label}" debe ser un número positivo.`);
+                            }
+                        }
+                        if (value.length > field.maxLength) {
+                            errors.push(`El campo "${field.label}" no debe exceder los ${field.maxLength} caracteres.`);
                         }
                     }
                 });
 
-                // Validar Atenciones de Enfermería (todos obligatorios)
+                // Validar Atenciones de Enfermería
                 const atenciones = [
-                    { id: 'inyectables', label: 'Inyectables' },
-                    { id: 'orientacion_alimentacion', label: 'Orientación Alimentación' },
-                    { id: 'lavado_oidos', label: 'Lavado de Oídos' },
-                    { id: 'orientacion_tratamiento', label: 'Orientación Tratamiento' },
-                    { id: 'curacion', label: 'Curación' },
-                    { id: 'adm_medicamentos', label: 'Administración Medicamentos' },
-                    { id: 'derivacion', label: 'Derivación' }
+                    { id: 'inyectables', label: 'Inyectables', maxLength: 1000 },
+                    { id: 'orientacion_alimentacion', label: 'Orientación Alimentación', maxLength: 1000 },
+                    { id: 'lavado_oidos', label: 'Lavado de Oídos', maxLength: 1000 },
+                    { id: 'orientacion_tratamiento', label: 'Orientación Tratamiento', maxLength: 1000 },
+                    { id: 'curacion', label: 'Curación', maxLength: 1000 },
+                    { id: 'adm_medicamentos', label: 'Administración Medicamentos', maxLength: 1000 },
+                    { id: 'derivacion', label: 'Derivación', maxLength: 255 }
                 ];
                 atenciones.forEach(field => {
                     const input = document.getElementById(field.id);
-                    if (!input.value.trim()) {
-                        errors.push(`El campo "${field.label}" es obligatorio.`);
-                    } else if (input.value.length > 1000) {
-                        errors.push(`El campo "${field.label}" no debe exceder los 1000 caracteres.`);
+                    const value = input.value.trim();
+                    if (value !== '' && value !== '-') {
+                        if (value.length > field.maxLength) {
+                            errors.push(`El campo "${field.label}" no debe exceder los ${field.maxLength} caracteres.`);
+                        }
                     }
                 });
 
+                // Validar Peso y Talla
                 const pesoTalla = document.getElementById('peso_talla');
-                if (!pesoTalla.value.trim()) {
-                    errors.push('El campo "Peso y Talla" es obligatorio.');
-                } else if (!/^\d{1,3}\/\d{1,3}$/.test(pesoTalla.value.trim())) {
-                    errors.push('El campo "Peso y Talla" debe tener el formato correcto (ejemplo: 70/165).');
+                const pesoTallaValue = pesoTalla.value.trim();
+                if (pesoTallaValue !== '' && pesoTallaValue !== '-') {
+                    if (!/^\d{1,3}\/\d{1,3}$/.test(pesoTallaValue)) {
+                        errors.push('El campo "Peso y Talla" debe tener el formato correcto (ejemplo: 70/165).');
+                    }
+                    if (pesoTallaValue.length > 255) {
+                        errors.push('El campo "Peso y Talla" no debe exceder los 255 caracteres.');
+                    }
                 }
 
                 // Mostrar errores con SweetAlert2

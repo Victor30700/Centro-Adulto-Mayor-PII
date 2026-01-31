@@ -32,7 +32,7 @@ cuando el rol del usuario autenticado sea 'legal'.
         </li>
         {{-- ENLACE CORREGIDO Y AÑADIDO --}}
         <li>
-            <a href="{{ route('gestionar-adultomayor.create') }}" class="slide-item">Registrar Paciente</a>
+            <a href="{{ route('gestionar-adultomayor.create') }}" class="slide-item">Registrar Adulto</a>
         </li>
     </ul>
 </li>

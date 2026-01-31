@@ -15,7 +15,7 @@
         .container {
             width: 100%;
             margin: 0 auto;
-            padding: 20px 30px; /* Padding para los bordes de la página */
+            padding: 20px 30px;
             box-sizing: border-box;
         }
 
@@ -30,7 +30,7 @@
             padding: 0;
         }
         .header-table .logo-cell {
-            width: 100px; /* Ancho fijo para la celda del logo */
+            width: 100px;
             text-align: left;
             padding-right: 10px;
         }
@@ -84,7 +84,7 @@
             border: 1px solid black;
             padding: 4px 6px;
             text-align: left;
-            vertical-align: middle; /* Centrado vertical en celdas */
+            vertical-align: middle;
         }
         .data-table th {
             background-color: #f0f0f0;
@@ -104,7 +104,7 @@
             line-height: 1.4;
             text-align: justify;
         }
-        
+
         /* Controles de checkbox */
         .checkbox-label {
             display: inline-block;
@@ -123,6 +123,21 @@
             font-size: 8pt;
         }
 
+        /* Estilos para ANEXO AL NUMERAL III (sin tabla) */
+        .anexo-n3-item {
+            margin-bottom: 15px;
+            border: 1px solid black;
+            padding: 5px;
+        }
+        .anexo-n3-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .anexo-n3-value {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
         /* Firmas y PIE */
         .signatures-area {
             margin-top: 30px;
@@ -138,7 +153,7 @@
         }
         .signature-line {
             border-bottom: 1px solid black;
-            height: 1px; /* Para asegurar que la línea se muestre */
+            height: 1px;
             margin: 20px auto 5px auto;
             width: 80%;
         }
@@ -154,14 +169,12 @@
     </style>
 </head>
 <body>
-    {{-- Importar Carbon para usarlo directamente en la vista --}}
     @php
         use Carbon\Carbon;
-        use Illuminate\Support\Facades\Storage; // Necesario para Storage::disk('public')->exists
+        use Illuminate\Support\Facades\Storage;
     @endphp
 
     <div class="container">
-        {{-- Encabezado del Documento (Logo y Títulos de Gobierno) --}}
         <table class="header-table">
             <tr>
                 <td class="logo-cell">
@@ -176,13 +189,12 @@
 
         <h1 class="main-title">REGISTRO DE ATENCIÓN Y PROTECCIÓN A PERSONAS ADULTAS MAYORES</h1>
 
-        {{-- Datos de la Unidad y Fecha/Nro Caso --}}
         <table class="data-table">
             <tr>
                 <td style="width: 25%; font-weight: bold;">NOMBRE DE LA UNIDAD:</td>
                 <td style="width: 55%;">UNIDAD DE ATENCIÓN SOCIAL, FAMILIA Y GENERACIONAL – OFICINA DEL ADULTO MAYOR</td>
                 <td style="width: 10%; font-weight: bold;">FECHA:</td>
-                <td style="width: 10%;">{{ mb_strtoupper(optional($adulto->fecha)->format('d/m/Y') ?? 'N/A') }}</td>
+                <td style="width: 10%;">{{ Carbon::now()->format('d/m/Y') }}</td>
             </tr>
             <tr>
                 <td colspan="3" style="text-align: right; font-weight: bold;">N° CASO:</td>
@@ -190,7 +202,6 @@
             </tr>
         </table>
 
-        {{-- I. Datos Generales de la Persona Adulta Mayor --}}
         <h2 class="section-title">I. DATOS GENERALES DE LA PERSONA ADULTA MAYOR</h2>
         <table class="data-table">
             <tr>
@@ -211,7 +222,7 @@
             </tr>
             <tr>
                 <td colspan="4"><span class="label">CON QUIÉN VIVE:</span> <span class="value">{{ mb_strtoupper(optional($adulto)->vive_con ?? 'N/A') }}</span></td>
-                <td colspan="3"><span class="label">TELÉFONO:</span> <span class="value">{{ mb_strtoupper(optional($adulto->persona)->telefono ?? 'N/A') }}</span></td> {{-- Usar telefono para consistencia con Word --}}
+                <td colspan="3"><span class="label">TELÉFONO:</span> <span class="value">{{ mb_strtoupper(optional($adulto->persona)->telefono ?? 'N/A') }}</span></td>
             </tr>
             <tr>
                 <td colspan="4"><span class="label">ZONA/COMUNIDAD:</span> <span class="value">{{ mb_strtoupper(optional($adulto->persona)->zona_comunidad ?? 'N/A') }}</span></td>
@@ -223,7 +234,6 @@
             </tr>
         </table>
 
-        {{-- II. Actividad Laboral Remunerada --}}
         <h2 class="section-title">II. ACTIVIDAD LABORAL REMUNERADA DE LA PERSONA ADULTA MAYOR:
             <span class="checkbox-label">SI (<span class="checkbox-box">{{ (optional($adulto->actividadLaboral)->nombre_actividad || optional($adulto->actividadLaboral)->ocupacion ? 'X' : '') }}</span>)</span>
             <span class="checkbox-label">NO (<span class="checkbox-box">{{ (!optional($adulto->actividadLaboral)->nombre_actividad && !optional($adulto->actividadLaboral)->ocupacion ? 'X' : '') }}</span>)</span>
@@ -248,7 +258,6 @@
             <p>NO SE REGISTRÓ ACTIVIDAD LABORAL REMUNERADA.</p>
         @endif
 
-        {{-- III. Datos del: Informante / Solicitante / Denunciante --}}
         <h2 class="section-title">III. DATOS DEL: INFORMANTE <span class="checkbox-box">{{ (optional($informante)->tipo_encargado == 'informante' ? 'X' : '') }}</span>
             SOLICITANTE <span class="checkbox-box">{{ (optional($informante)->tipo_encargado == 'solicitante' ? 'X' : '') }}</span>
             DENUNCIANTE <span class="checkbox-box">{{ (optional($informante)->tipo_encargado == 'denunciante' ? 'X' : '') }}</span>
@@ -272,7 +281,7 @@
                     </tr>
                     <tr>
                         <td><span class="label">RELACIÓN/PARENTESCO:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaNatural)->relacion_parentesco ?? '') }}</span></td>
-                        <td colspan="3"><span class="label">DIRECCIÓN DE TRABAJO:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaNatural)->direccion_de_trabajo ?? '') }}</span></td> {{-- Campo de Word --}}
+                        <td colspan="3"><span class="label">DIRECCIÓN DE TRABAJO:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaNatural)->direccion_de_trabajo ?? '') }}</span></td>
                         <td colspan="2"><span class="label">OCUPACIÓN:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaNatural)->ocupacion ?? '') }}</span></td>
                     </tr>
                 </table>
@@ -280,12 +289,12 @@
                 <h3 class="subsection-title">PERSONA JURÍDICA:</h3>
                 <table class="data-table">
                     <tr>
-                        <td colspan="2"><span class="label">NOMBRE DE INSTITUCIÓN:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->nombre_institucion ?? '') }}</span></td> {{-- Campo corregido según Word --}}
+                        <td colspan="2"><span class="label">NOMBRE DE INSTITUCIÓN:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->nombre_institucion ?? '') }}</span></td>
                         <td colspan="2"><span class="label">DIRECCIÓN:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->direccion ?? '') }}</span></td>
                     </tr>
                     <tr>
-                        <td colspan="2"><span class="label">TELÉFONO:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->telefono_juridica ?? '') }}</span></td> {{-- Campo de Word --}}
-                        <td colspan="2"><span class="label">NOMBRE DEL FUNCIONARIO RESPONSABLE:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->nombre_funcionario ?? '') }}</span></td> {{-- Campo de Word --}}
+                        <td colspan="2"><span class="label">TELÉFONO:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->telefono_juridica ?? '') }}</span></td>
+                        <td colspan="2"><span class="label">NOMBRE DEL FUNCIONARIO RESPONSABLE:</span> <span class="value">{{ mb_strtoupper(optional($informante->personaJuridica)->nombre_funcionario ?? '') }}</span></td>
                     </tr>
                 </table>
             @else
@@ -295,7 +304,6 @@
             <p>NO SE REGISTRÓ INFORMACIÓN DEL INFORMANTE.</p>
         @endif
 
-        {{-- a) Datos del Ofensor(a) Denunciado(a) --}}
         <h2 class="subsection-title">a) DATOS DEL OFENSOR(A) DENUNCIADO(A)</h2>
         @php
             $denunciado = optional($adulto)->denunciado;
@@ -309,7 +317,7 @@
                     <td colspan="2"><span class="label">NOMBRES:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->nombres ?? '') }}</span></td>
                 </tr>
                 <tr>
-                    <td><span class="label">SEXO:</span> <span class="value">{{ mb_strtoupper(optional($denunciado)->sexo == 'M' ? 'Masculino' : (optional($denunciado)->sexo == 'F' ? 'Femenino' : 'N/A')) }}</span></td> {{-- Tomado de $denunciado, no $denunciadoPN --}}
+                    <td><span class="label">SEXO:</span> <span class="value">{{ mb_strtoupper(optional($denunciado)->sexo == 'M' ? 'Masculino' : (optional($denunciado)->sexo == 'F' ? 'Femenino' : 'N/A')) }}</span></td>
                     <td><span class="label">EDAD:</span> <span class="value">{{ optional($denunciadoPN)->edad ?? '' }}</span></td>
                     <td><span class="label">C.I.:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->ci ?? '') }}</span></td>
                     <td colspan="3"><span class="label">TELÉFONO:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->telefono ?? '') }}</span></td>
@@ -317,7 +325,7 @@
                 <tr>
                     <td colspan="3"><span class="label">DIRECCIÓN DOMICILIO (COMUNIDAD):</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->direccion_domicilio ?? '') }}</span></td>
                     <td><span class="label">RELACIÓN/PARENTESCO:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->relacion_parentesco ?? '') }}</span></td>
-                    <td><span class="label">DIRECCIÓN DE TRABAJO:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->direccion_de_trabajo ?? '') }}</span></td> {{-- Campo de Word --}}
+                    <td><span class="label">DIRECCIÓN DE TRABAJO:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->direccion_de_trabajo ?? '') }}</span></td>
                     <td><span class="label">OCUPACIÓN:</span> <span class="value">{{ mb_strtoupper(optional($denunciadoPN)->ocupacion ?? '') }}</span></td>
                 </tr>
             </table>
@@ -325,11 +333,9 @@
             <p>NO SE REGISTRARON DATOS DEL OFENSOR(A)/DENUNCIADO(A).</p>
         @endif
 
-        {{-- b) Descripción de los Hechos --}}
         <h2 class="subsection-title">b) DESCRIPCIÓN DE LOS HECHOS:</h2>
-        <div class="text-area-box">{{ mb_strtoupper(optional($denunciado)->descripcion_hechos ?? 'NO ESPECIFICADO.') }}</div> {{-- Tomado de $denunciado, no $adulto --}}
+        <div class="text-area-box">{{ mb_strtoupper(optional($denunciado)->descripcion_hechos ?? 'NO ESPECIFICADO.') }}</div>
 
-        {{-- c) Grupo Familiar de la Persona Adulta Mayor --}}
         <h2 class="subsection-title">c) GRUPO FAMILIAR DE LA PERSONA ADULTA MAYOR:</h2>
         @php
             $grupoFamiliar = optional($adulto)->grupoFamiliar;
@@ -353,8 +359,8 @@
                     @foreach($grupoFamiliar as $index => $familiar)
                         <tr>
                             <td class="center">{{ $index + 1 }}</td>
-                            <td>{{ mb_strtoupper(optional($familiar)->apellido_paterno ?? 'N/A') }}</td> {{-- Campo de Word --}}
-                            <td>{{ mb_strtoupper(optional($familiar)->apellido_materno ?? 'N/A') }}</td> {{-- Campo de Word --}}
+                            <td>{{ mb_strtoupper(optional($familiar)->apellido_paterno ?? 'N/A') }}</td>
+                            <td>{{ mb_strtoupper(optional($familiar)->apellido_materno ?? 'N/A') }}</td>
                             <td>{{ mb_strtoupper(optional($familiar)->nombres ?? 'N/A') }}</td>
                             <td>{{ mb_strtoupper(optional($familiar)->parentesco ?? 'N/A') }}</td>
                             <td class="center">{{ optional($familiar)->edad ?? 'N/A' }}</td>
@@ -369,7 +375,6 @@
             <p>NO SE REGISTRÓ INFORMACIÓN DEL GRUPO FAMILIAR.</p>
         @endif
 
-        {{-- IV. Croquis del domicilio o lugar de referencia del Adulto Mayor --}}
         <h2 class="section-title">IV. CROQUIS DEL DOMICILIO O LUGAR DE REFERENCIA DEL ADULTO MAYOR:</h2>
         @php
             $croquis = optional($adulto)->croquis;
@@ -377,8 +382,8 @@
         @if($croquis)
             <table class="data-table">
                 <tr>
-                    <td colspan="2"><span class="label">NOMBRE Y APELLIDOS DEL DENUNCIANTE:</span> <span class="value">{{ mb_strtoupper(trim(optional($croquis)->nombre_denunciante ?? '') . ' ' . trim(optional($croquis)->apellidos_denunciante ?? '')) }}</span></td> {{-- Campos de Word --}}
-                    <td colspan="1"><span class="label">C.I.:</span> <span class="value">{{ mb_strtoupper(optional($croquis)->ci_denunciante ?? 'N/A') }}</span></td> {{-- Campo de Word --}}
+                    <td colspan="2"><span class="label">NOMBRE Y APELLIDOS DEL DENUNCIANTE:</span> <span class="value">{{ mb_strtoupper(trim(optional($croquis)->nombre_denunciante ?? '') . ' ' . trim(optional($croquis)->apellidos_denunciante ?? '')) }}</span></td>
+                    <td colspan="1"><span class="label">C.I.:</span> <span class="value">{{ mb_strtoupper(optional($croquis)->ci_denunciante ?? 'N/A') }}</span></td>
                 </tr>
                 <tr>
                     <td colspan="3" style="text-align: center;">
@@ -403,9 +408,9 @@
                 </tr>
                 <tr>
                     <td colspan="3" style="text-align: center;">
-                        <div style="height: 40px;"></div>
-                        <span class="signature-text">FIRMA O HUELLA DIGITAL DEL DENUNCIANTE</span>
-                        <div style="height: 20px;"></div>
+                        <div style="height: 80px;"></div>
+                        <span class="signature-text">FIRMA O HUELLA DIGITAL DEL ADULTO MAYOR</span>
+                        <div style="height: 80px;"></div>
                         <span class="signature-text">FIRMA Y SELLO DEL FUNCIONARIO</span>
                     </td>
                 </tr>
@@ -414,7 +419,6 @@
             <p>NO SE REGISTRÓ INFORMACIÓN DEL CROQUIS.</p>
         @endif
 
-        {{-- V. Seguimiento del caso --}}
         <h2 class="section-title">V. SEGUIMIENTO DEL CASO:</h2>
         @php
             $seguimientos = optional($adulto)->seguimientos;
@@ -433,11 +437,11 @@
                 <tbody>
                     @foreach($seguimientos as $index => $seguimiento)
                         <tr>
-                            <td class="center">{{ optional($seguimiento)->nro ?? 'N/A' }}</td> {{-- Campo de Word --}}
-                            <td>{{ optional($seguimiento)->fecha ? Carbon::parse($seguimiento->fecha)->format('d/m/Y') : 'N/A' }}</td> {{-- Campo de Word --}}
+                            <td class="center">{{ optional($seguimiento)->nro ?? 'N/A' }}</td>
+                            <td>{{ optional($seguimiento)->fecha ? Carbon::parse($seguimiento->fecha)->format('d/m/Y') : 'N/A' }}</td>
                             <td>{{ mb_strtoupper(optional($seguimiento)->accion_realizada ?? 'N/A') }}</td>
                             <td>{{ mb_strtoupper(optional($seguimiento)->resultado_obtenido ?? 'N/A') }}</td>
-                            <td>{{ mb_strtoupper(trim(optional(optional($seguimiento)->usuario)->persona->nombres ?? '') . ' ' . trim(optional(optional($seguimiento)->usuario)->persona->primer_apellido ?? '') . ' ' . trim(optional(optional($seguimiento)->usuario)->persona->segundo_apellido ?? '')) }}</td> {{-- Campos de Word --}}
+                            <td>{{ mb_strtoupper(trim(optional(optional($seguimiento)->usuario)->persona->nombres ?? '') . ' ' . trim(optional(optional($seguimiento)->usuario)->persona->primer_apellido ?? '') . ' ' . trim(optional(optional($seguimiento)->usuario)->persona->segundo_apellido ?? '')) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -446,91 +450,106 @@
             <p>NO SE REGISTRARON SEGUIMIENTOS PARA ESTE CASO.</p>
         @endif
 
-        {{-- VI. Intervención de la Institución --}}
         <h2 class="section-title">VI. INTERVENCIÓN DE LA INSTITUCIÓN.</h2>
         @if($intervencion)
-            <div class="data-table" style="border: 1px solid black; padding: 10px;">
-                <p><span class="label">RESUELTO:</span> <span class="checkbox-box">{{ (optional($intervencion)->resuelto_descripcion !== null && optional($intervencion)->resuelto_descripcion !== '' ? 'X' : '') }}</span> ¿CÓMO?: <span class="value">{{ mb_strtoupper(optional($intervencion)->resuelto_descripcion ?? 'N/A') }}</span></p>
-
-                <p><span class="label">NO RESULTADO:</span> <span class="checkbox-box">{{ (optional($intervencion)->no_resultado !== null && optional($intervencion)->no_resultado !== '' ? 'X' : '') }}</span> ¿POR QUÉ?: <span class="value">{{ mb_strtoupper(optional($intervencion)->no_resultado ?? 'N/A') }}</span></p>
-
-                <p><span class="label">DERIVADO A OTRA INSTITUCIÓN:</span> <span class="checkbox-box">{{ (optional($intervencion)->derivacion_institucion !== null && optional($intervencion)->derivacion_institucion !== '' ? 'X' : '') }}</span> ¿POR QUÉ?: <span class="value">{{ mb_strtoupper(optional($intervencion)->derivacion_institucion ?? 'N/A') }}</span></p>
-                
-                <p style="margin-top: 10px;"><span class="label">DERIVACIONES Y RESULTADOS:</span></p>
-                <ul style="list-style-type: none; padding-left: 20px; margin-top: 5px; margin-bottom: 5px;">
-                    <li><span class="label">DERIVADO Y EN SEGUIMIENTO LEGAL:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->der_seguimiento_legal ?? 'N/A') }}</span></li>
-                    <li><span class="label">DERIVADO Y EN SEGUIMIENTO PSICOLÓGICO:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->der_seguimiento_psi ?? 'N/A') }}</span></li>
-                    <li><span class="label">DERIVADO Y RESUELTO EN OTRA INSTITUCIÓN:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->der_resuelto_externo ?? 'N/A') }}</span></li>
-                    <li><span class="label">DERIVADO A OTRA INSTITUCIÓN Y NO RESUELTO:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->der_noresuelto_externo ?? 'N/A') }}</span></li>
-                </ul>
-
-                <p><span class="label">ABANDONADO POR LA VÍCTIMA - ¿QUÉ PASÓ?:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->abandono_victima ?? 'N/A') }}</span></p>
-                <p><span class="label">RESUELTO MEDIANTE CONCILIACIÓN SEGÚN JUSTICIA INDÍGENA ORIGINARIA:</span> <span class="value">{{ mb_strtoupper(optional($intervencion)->resuelto_conciliacion_jio ?? 'N/A') }}</span></p>
-
-                <p style="text-align: right; margin-top: 15px;">
-                    <span class="label">FECHA:</span> <span class="value">{{ optional($intervencion->fecha_intervencion ?? null)->format('d/m/Y') ?? 'N/A' }}</span>
-                </p>
-                <p style="text-align: center; margin-top: 20px;">
-                    <div style="height: 40px;"></div>
-                    <span class="signature-text">SELLO Y FIRMA DEL FUNCIONARIO RESPONSABLE</span>
-                </p>
-            </div>
+            <table class="data-table" style="max-width: 180mm; margin: 0 auto; box-sizing: border-box;">
+                <tr>
+                    <td style="width: 20%; vertical-align: top;">
+                        <span class="label">RESUELTO:</span> <span class="checkbox-box">{{ (optional($intervencion)->resuelto_descripcion !== null && optional($intervencion)->resuelto_descripcion !== '' ? 'X' : '') }}</span>
+                    </td>
+                    <td style="width: 80%; vertical-align: top;">
+                        <span class="label">¿CÓMO?:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->resuelto_descripcion ?? 'N/A') }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 20%; vertical-align: top;">
+                        <span class="label">NO RESULTADO:</span> <span class="checkbox-box">{{ (optional($intervencion)->no_resultado !== null && optional($intervencion)->no_resultado !== '' ? 'X' : '') }}</span>
+                    </td>
+                    <td style="width: 80%; vertical-align: top;">
+                        <span class="label">¿POR QUÉ?:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->no_resultado ?? 'N/A') }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 20%; vertical-align: top;">
+                        <span class="label">DERIVADO A OTRA INSTITUCIÓN:</span> <span class="checkbox-box">{{ (optional($intervencion)->derivacion_institucion !== null && optional($intervencion)->derivacion_institucion !== '' ? 'X' : '') }}</span>
+                    </td>
+                    <td style="width: 80%; vertical-align: top;">
+                        <span class="label">¿POR QUÉ?:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->derivacion_institucion ?? 'N/A') }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="vertical-align: top;">
+                        <span class="label">DERIVACIONES Y RESULTADOS:</span>
+                        <ul style="list-style-type: none; padding-left: 20px; margin: 5px 0;">
+                            <li><span class="label">DERIVADO Y EN SEGUIMIENTO LEGAL:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->der_seguimiento_legal ?? 'N/A') }}</span></li>
+                            <li><span class="label">DERIVADO Y EN SEGUIMIENTO PSICOLÓGICO:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->der_seguimiento_psi ?? 'N/A') }}</span></li>
+                            <li><span class="label">DERIVADO Y RESUELTO EN OTRA INSTITUCIÓN:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->der_resuelto_externo ?? 'N/A') }}</span></li>
+                            <li><span class="label">DERIVADO A OTRA INSTITUCIÓN Y NO RESUELTO:</span> <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->der_noresuelto_externo ?? 'N/A') }}</span></li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 20%; vertical-align: top;">
+                        <span class="label">ABANDONADO POR LA VÍCTIMA - ¿QUÉ PASÓ?:</span>
+                    </td>
+                    <td style="width: 80%; vertical-align: top;">
+                        <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->abandono_victima ?? 'N/A') }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 20%; vertical-align: top;">
+                        <span class="label">RESUELTO MEDIANTE CONCILIACIÓN SEGÚN JUSTICIA INDÍGENA ORIGINARIA:</span>
+                    </td>
+                    <td style="width: 80%; vertical-align: top;">
+                        <span class="value" style="word-wrap: break-word; display: block;">{{ mb_strtoupper(optional($intervencion)->resuelto_conciliacion_jio ?? 'N/A') }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: right; padding-top: 15px;">
+                        <span class="label">FECHA:</span> <span class="value">{{ optional($intervencion->fecha_intervencion ?? null)->format('d/m/Y') ?? 'N/A' }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center; padding-top: 20px;">
+                        <div style="height: 40px;"></div>
+                        <span class="signature-text">SELLO Y FIRMA DEL FUNCIONARIO RESPONSABLE</span>
+                    </td>
+                </tr>
+            </table>
         @else
             <p>NO SE REGISTRÓ INFORMACIÓN DE INTERVENCIÓN.</p>
         @endif
 
-        {{-- ANEXO AL NUMERAL III (Anexo N3) --}}
         <h2 class="section-title">ANEXO AL NUMERAL III.</h2>
         @php
             $anexosN3 = optional($adulto)->anexoN3;
         @endphp
         @if($anexosN3 && $anexosN3->count() > 0)
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 3%;">N°</th>
-                        <th style="width: 8%;">PRIMER APELLIDO</th>
-                        <th style="width: 8%;">SEGUNDO APELLIDO</th>
-                        <th style="width: 9%;">NOMBRES</th>
-                        <th style="width: 3%;">SEXO</th>
-                        <th style="width: 3%;">EDAD</th>
-                        <th style="width: 7%;">CI</th>
-                        <th style="width: 8%;">TELÉFONO</th>
-                        <th style="width: 12%;">DIRECCIÓN DOMICILIO (COMUNIDAD)</th>
-                        <th style="width: 10%;">RELACIÓN/PARENTESCO</th>
-                        <th style="width: 14%;">DIRECCIÓN DE TRABAJO</th>
-                        <th style="width: 15%;">OCUPACIÓN</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($anexosN3 as $index => $anexo3)
-                        @php
-                            $personaNaturalAnexo3 = optional($anexo3)->personaNatural;
-                        @endphp
-                        @if($personaNaturalAnexo3)
-                            <tr>
-                                <td class="center">{{ $index + 1 }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->primer_apellido ?? 'N/A') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->segundo_apellido ?? '') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->nombres ?? 'N/A') }}</td>
-                                <td class="center">{{ mb_strtoupper(optional($personaNaturalAnexo3)->sexo == 'M' ? 'M' : (optional($personaNaturalAnexo3)->sexo == 'F' ? 'F' : 'N/A')) }}</td>
-                                <td class="center">{{ optional($personaNaturalAnexo3)->edad ?? 'N/A' }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->ci ?? 'N/A') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->telefono ?? 'N/A') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->direccion_domicilio ?? 'N/A') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->relacion_parentesco ?? 'N/A') }}</td>
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->direccion_de_trabajo ?? 'N/A') }}</td> {{-- Campo de Word --}}
-                                <td>{{ mb_strtoupper(optional($personaNaturalAnexo3)->ocupacion ?? 'N/A') }}</td>
-                            </tr>
-                        @endif
-                    @endforeach
-                </tbody>
-            </table>
+            @foreach($anexosN3 as $index => $anexo3)
+                @php
+                    $personaNaturalAnexo3 = optional($anexo3)->personaNatural;
+                @endphp
+                @if($personaNaturalAnexo3)
+                    <div class="anexo-n3-item">
+                        <p><span class="anexo-n3-label">N°:</span> <span class="anexo-n3-value">{{ $index + 1 }}</span></p>
+                        <p><span class="anexo-n3-label">PRIMER APELLIDO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->primer_apellido ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">SEGUNDO APELLIDO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->segundo_apellido ?? '') }}</span></p>
+                        <p><span class="anexo-n3-label">NOMBRES:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->nombres ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">SEXO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->sexo == 'M' ? 'M' : (optional($personaNaturalAnexo3)->sexo == 'F' ? 'F' : 'N/A')) }}</span></p>
+                        <p><span class="anexo-n3-label">EDAD:</span> <span class="anexo-n3-value">{{ optional($personaNaturalAnexo3)->edad ?? 'N/A' }}</span></p>
+                        <p><span class="anexo-n3-label">CI:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->ci ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">TELÉFONO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->telefono ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">DIRECCIÓN DOMICILIO (COMUNIDAD):</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->direccion_domicilio ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">RELACIÓN/PARENTESCO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->relacion_parentesco ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">DIRECCIÓN DE TRABAJO:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->direccion_de_trabajo ?? 'N/A') }}</span></p>
+                        <p><span class="anexo-n3-label">OCUPACIÓN:</span> <span class="anexo-n3-value">{{ mb_strtoupper(optional($personaNaturalAnexo3)->ocupacion ?? 'N/A') }}</span></p>
+                    </div>
+                @endif
+            @endforeach
         @else
             <p>NO SE REGISTRARON ANEXOS AL NUMERAL III.</p>
         @endif
 
-        {{-- ANEXO AL NUMERAL V (Anexo N5) --}}
         <h2 class="section-title">ANEXO AL NUMERAL V.</h2>
         @php
             $anexosN5 = optional($adulto)->anexoN5;
@@ -549,11 +568,11 @@
                 <tbody>
                     @foreach($anexosN5 as $index => $anexo5)
                         <tr>
-                            <td class="center">{{ optional($anexo5)->numero ?? 'N/A' }}</td> {{-- Campo de Word --}}
-                            <td>{{ optional($anexo5)->fecha ? Carbon::parse($anexo5->fecha)->format('d/m/Y') : 'N/A' }}</td> {{-- Campo de Word --}}
+                            <td class="center">{{ optional($anexo5)->numero ?? 'N/A' }}</td>
+                            <td>{{ optional($anexo5)->fecha ? Carbon::parse($anexo5->fecha)->format('d/m/Y') : 'N/A' }}</td>
                             <td>{{ mb_strtoupper(optional($anexo5)->accion_realizada ?? 'N/A') }}</td>
                             <td>{{ mb_strtoupper(optional($anexo5)->resultado_obtenido ?? 'N/A') }}</td>
-                            <td>{{ mb_strtoupper(trim(optional(optional($anexo5)->usuario)->persona->nombres ?? '') . ' ' . trim(optional(optional($anexo5)->usuario)->persona->primer_apellido ?? '') . ' ' . trim(optional(optional($anexo5)->usuario)->persona->segundo_apellido ?? '')) }}</td> {{-- Campos de Word --}}
+                            <td>{{ mb_strtoupper(trim(optional(optional($anexo5)->usuario)->persona->nombres ?? '') . ' ' . trim(optional(optional($anexo5)->usuario)->persona->primer_apellido ?? '') . ' ' . trim(optional(optional($anexo5)->usuario)->persona->segundo_apellido ?? '')) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -561,28 +580,6 @@
         @else
             <p>NO SE REGISTRARON ANEXOS AL NUMERAL V.</p>
         @endif
-
-        {{-- Firmas Finales --}}
-        <div class="signatures-area" style="margin-top: 30px;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
-                        <div style="border-bottom: 1px solid black; height: 1px; margin: 50px auto 5px auto; width: 80%;"></div> {{-- Aumento de margin-top --}}
-                        <div class="signature-text">FIRMA DEL PROFESIONAL</div>
-                    </td>
-                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
-                        <div style="border-bottom: 1px solid black; height: 1px; margin: 50px auto 5px auto; width: 80%;"></div> {{-- Aumento de margin-top --}}
-                        <div class="signature-text">FIRMA DEL USUARIO(A)</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        {{-- Pie de página (ejemplo) --}}
-        <p class="footer-text">
-            GENERADO AUTOMÁTICAMENTE POR EL SISTEMA DE GESTIÓN DE ADULTOS MAYORES.
-        </p>
-
-    </div> {{-- Fin container --}}
+    </div>
 </body>
 </html>

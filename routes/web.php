@@ -42,7 +42,7 @@ Route::middleware('guest')->group(function () {
         Route::get('/responsable/dashboard', fn() => view('pages.responsable.dashboard'))->name('responsable.dashboard')->middleware('role:admin,responsable');
         
         // --- GRUPO DE RUTAS DE GESTIÓN DE ADULTOS MAYORES ---
-        Route::prefix('gestionar-adultos-mayores')->name('gestionar-adultomayor.')->middleware('role:admin,legal')->group(function () {
+        Route::prefix('gestionar-adultos-mayores')->name('gestionar-adultomayor.')->middleware('role:admin,legal,responsable')->group(function () {
             Route::get('/', [AdminController::class, 'gestionarAdultoMayorIndex'])->name('index');
             Route::get('/crear', [AdminController::class, 'showRegisterAdultoMayor'])->name('create');
             Route::get('/buscar', [AdminController::class, 'buscarAdultoMayor'])->name('buscar');

@@ -21,16 +21,16 @@ Descripción: Menú completo y corregido para el rol de Administrador.
     <a class="side-menu__item" href="{{ route('admin.gestionar-roles.index') }}"><i class="side-menu__icon fe fe-shield"></i><span class="side-menu__label">Gestionar Roles</span></a>
 </li>
 
-{{-- ===================== SECCIÓN GESTIÓN DE PACIENTES ===================== --}}
-<li class="sub-category"><h3>Gestión de Pacientes</h3></li>
+{{-- ===================== SECCIÓN GESTIÓN DE AdultoS ===================== --}}
+<li class="sub-category"><h3>Gestión de Adultos</h3></li>
 <li class="slide">
     <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);">
         <i class="side-menu__icon fe fe-user-check"></i><span class="side-menu__label">Adulto Mayor</span><i class="angle fe fe-chevron-right"></i>
     </a>
     <ul class="slide-menu">
         {{-- ** CORRECCIÓN IMPORTANTE **: El nombre de la ruta no lleva el prefijo 'admin.' --}}
-        <li><a href="{{ route('gestionar-adultomayor.index') }}" class="slide-item">Gestionar Pacientes</a></li>
-        <li><a href="{{ route('gestionar-adultomayor.create') }}" class="slide-item">Registrar Paciente</a></li>
+        <li><a href="{{ route('gestionar-adultomayor.index') }}" class="slide-item">Gestionar Adultos</a></li>
+        <li><a href="{{ route('gestionar-adultomayor.create') }}" class="slide-item">Registrar Adulto</a></li>
     </ul>
 </li>
 

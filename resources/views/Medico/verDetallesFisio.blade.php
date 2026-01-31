@@ -71,11 +71,11 @@
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Fecha de Registro:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->created_at ? \Carbon\Carbon::parse($fichaFisioterapia->created_at)->format('d/m/Y H:i') : 'N/A' }}</span>
+                                            <span class="detail-value">{{ optional($fichaFisioterapia->created_at)->format('d/m/Y H:i') ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Última Actualización:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->updated_at ? \Carbon\Carbon::parse($fichaFisioterapia->updated_at)->format('d/m/Y H:i') : 'N/A' }}</span>
+                                            <span class="detail-value">{{ optional($fichaFisioterapia->updated_at)->format('d/m/Y H:i') ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Historia Clínica Asociada:</span>
@@ -89,31 +89,47 @@
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Número de Emergencia:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->num_emergencia ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->num_emergencia ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Enfermedades Actuales:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->enfermedades_actuales ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->enfermedades_actuales ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Alergias:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->alergias ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->alergias ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Fecha de Programación:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->fecha_programacion ? \Carbon\Carbon::parse($fichaFisioterapia->fecha_programacion)->format('d/m/Y') : 'N/A' }}</span>
+                                            <span class="detail-value">{{ optional($fichaFisioterapia->fecha_programacion)->format('d/m/Y') ?? 'N/A' }}</span>
+                                        </div>
+                                        
+                                        <!-- INICIO: CAMPOS AGREGADOS -->
+                                        <div class="detail-row">
+                                            <span class="detail-label">Fecha de Inicio:</span>
+                                            <span class="detail-value">{{ optional($fichaFisioterapia->fecha_inicio)->format('d/m/Y') ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
+                                            <span class="detail-label">Fecha de Fin:</span>
+                                            <span class="detail-value">{{ optional($fichaFisioterapia->fecha_fin)->format('d/m/Y') ?? 'N/A' }}</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Número de Sesiones:</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->numero_sesiones ?? 'N/A' }}</span>
+                                        </div>
+                                        <!-- FIN: CAMPOS AGREGADOS -->
+
+                                        <div class="detail-row">
                                             <span class="detail-label">Motivo de Consulta:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->motivo_consulta ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->motivo_consulta ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Solicitud de Atención:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->solicitud_atencion ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->solicitud_atencion ?? 'N/A' }}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Equipos Utilizados:</span>
-                                            <span class="detail-value">{{ optional($fichaFisioterapia)->equipos ?? 'N/A' }}</span>
+                                            <span class="detail-value">{{ $fichaFisioterapia->equipos ?? 'N/A' }}</span>
                                         </div>
                                     </div>
                                 </div>

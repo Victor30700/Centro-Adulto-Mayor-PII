@@ -292,22 +292,32 @@ class RegistrarCasoController extends Controller
      */
     public function storeEncargado(Request $request, $id_adulto)
     {
+        // Ya no necesitamos determinar si ya existe un Encargado para ignorar su CI,
+        // porque el CI ya no será único.
+        $encargadoExistente = Encargado::where('id_adulto', $id_adulto)->first();
+        $personaNaturalIdToIgnore = null; // Mantener por si acaso, pero ya no se usa para la unicidad del CI.
+
+        // 1. Construir la regla dinámica para el CI de Persona Natural (Encargado).
+        // La regla 'unique' ha sido eliminada.
+        $ciRule = 'nullable|string|max:20';
+
+        // 2. Definir las reglas de validación completas.
         $rules = [
             'tipo_encargado' => 'required|in:natural,juridica',
         ];
 
         if ($request->tipo_encargado === 'natural') {
             $rules = array_merge($rules, [
-                'encargado_natural.nombres'           => 'required|string|max:255',
-                'encargado_natural.primer_apellido'   => 'required|string|max:100',
-                'encargado_natural.segundo_apellido'  => 'nullable|string|max:100',
-                'encargado_natural.edad'              => 'required|integer|min:1|max:120',
-                'encargado_natural.ci'                => 'required|string|max:20',
-                'encargado_natural.telefono'          => 'nullable|string|max:20',
+                'encargado_natural.nombres'             => 'required|string|max:255',
+                'encargado_natural.primer_apellido'     => 'required|string|max:100',
+                'encargado_natural.segundo_apellido'    => 'nullable|string|max:100',
+                'encargado_natural.edad'                => 'required|integer|min:1|max:120',
+                'encargado_natural.ci'                  => $ciRule, // Usamos la regla dinámica del CI (ahora solo nullable|string|max:20)
+                'encargado_natural.telefono'            => 'nullable|string|max:20',
                 'encargado_natural.direccion_domicilio' => 'nullable|string|max:255',
                 'encargado_natural.relacion_parentesco' => 'nullable|string|max:100',
                 'encargado_natural.direccion_de_trabajo' => 'nullable|string|max:255',
-                'encargado_natural.ocupacion'         => 'nullable|string|max:100',
+                'encargado_natural.ocupacion'           => 'nullable|string|max:100',
             ]);
         } else {
             $rules = array_merge($rules, [
@@ -324,6 +334,7 @@ class RegistrarCasoController extends Controller
                 'encargado_natural.nombres'          => 'Nombres del Encargado (Natural)',
                 'encargado_natural.primer_apellido'  => 'Primer Apellido del Encargado (Natural)',
                 'encargado_natural.ci'               => 'CI del Encargado (Natural)',
+                // El mensaje personalizado para 'ci.unique' ha sido eliminado.
                 'nombre_institucion'                 => 'Nombre de Institución (Encargado Jurídica)',
                 'direccion'                          => 'Dirección (Encargado Jurídica)',
                 'telefono_juridica'                  => 'Teléfono (Encargado Jurídica)',
@@ -332,42 +343,38 @@ class RegistrarCasoController extends Controller
 
             DB::beginTransaction();
 
-            // Validar duplicidad de CI para Persona Natural
-            if ($request->tipo_encargado === 'natural') {
-                $ci = $request->input('encargado_natural.ci');
-                // Verificar si el CI ya existe en Anexo N3 para este id_adulto
-                $anexoN3Exists = AnexoN3::where('id_adulto', $id_adulto)
-                    ->whereExists(function ($query) use ($ci) {
-                        $query->select(DB::raw(1))
-                              ->from('persona_natural')
-                              ->whereRaw('persona_natural.id_natural = anexo_n3.id_natural')
-                              ->where('persona_natural.ci', $ci);
-                    })
-                    ->exists();
-
-                if ($anexoN3Exists) {
-                    throw ValidationException::withMessages([
-                        'encargado_natural.ci' => ['El CI ya está registrado en Anexo N3 para este caso.']
-                    ]);
-                }
-            }
+            // La validación de duplicidad de CI para Persona Natural en AnexoN3 ha sido eliminada.
+            // Si necesitas alguna otra validación de AnexoN3 que no dependa de la unicidad del CI,
+            // deberás añadirla aquí.
 
             $encargado = Encargado::firstOrNew(['id_adulto' => $id_adulto]);
             $encargado->tipo_encargado = $request->tipo_encargado;
             $encargado->save();
 
             if ($request->tipo_encargado === 'natural') {
+                // Si el tipo cambia de Jurídica a Natural, eliminamos la PersonaJuridica anterior
                 if ($encargado->personaJuridica) {
                     $encargado->personaJuridica->delete();
                 }
+
+                $encargadoPersonaData = $request->input('encargado_natural');
+                // Asegura que esta PersonaNatural no se asocia como denunciado.
+                $encargadoPersonaData['id_denunciado'] = null;
+
+                // Buscar o crear la PersonaNatural asociada a este Encargado
+                // firstOrNew busca por id_encargado, si no existe, crea una nueva instancia.
+                // Si ya existe una persona natural asociada a este encargado, la actualiza.
                 $personaNatural = PersonaNatural::firstOrNew(['id_encargado' => $encargado->id_encargado]);
-                $personaNatural->fill($request->input('encargado_natural'));
-                $personaNatural->id_encargado = $encargado->id_encargado;
+                $personaNatural->fill($encargadoPersonaData);
+                $personaNatural->id_encargado = $encargado->id_encargado; // Asegurar la vinculación
                 $personaNatural->save();
-            } else {
+
+            } else { // tipo_encargado === 'juridica'
+                // Si el tipo cambia de Natural a Jurídica, eliminamos la PersonaNatural anterior
                 if ($encargado->personaNatural) {
                     $encargado->personaNatural->delete();
                 }
+
                 $personaJuridica = PersonaJuridica::firstOrNew(['id_encargado' => $encargado->id_encargado]);
                 $personaJuridica->fill($request->only([
                     'nombre_institucion', 'direccion', 'telefono_juridica', 'nombre_funcionario'
@@ -392,47 +399,31 @@ class RegistrarCasoController extends Controller
                          ->withInput()->with('active_tab', 'encargado');
         }
     }
-
     /**
      * Guarda/actualiza los datos del Denunciado.
      *
      * @param Request $request
      * @param int $id_adulto
      */
-   public function storeDenunciado(Request $request, $id_adulto)
+    public function storeDenunciado(Request $request, $id_adulto)
     {
         // 1. Determinar si ya existe un Denunciado para este AdultoMayor.
         // Esto nos permite saber si estamos creando uno nuevo o actualizando uno existente.
+        // ¡Esta línea es crucial para definir $denunciadoExistente!
         $denunciadoExistente = Denunciado::where('id_adulto', $id_adulto)->first();
-        $personaNaturalIdToIgnore = null;
+        $personaNaturalIdToIgnore = null; // Se mantiene, aunque ya no se usa para la unicidad del CI.
 
         // Si ya hay un Denunciado y está asociado a una PersonaNatural, obtenemos su ID.
-        // Este ID se usará para que la regla 'unique' ignore el propio registro
-        // cuando se actualiza.
-        // *** CORRECCIÓN AQUÍ: $denuncianteExistente -> $denunciadoExistente ***
-        if ($denunciadoExistente && $denunciadoExistente->id_natural) { // <-- Línea corregida
+        // Esto es para la lógica de actualizar la PersonaNatural existente, no para la unicidad del CI.
+        if ($denunciadoExistente && $denunciadoExistente->id_natural) {
             $personaNaturalIdToIgnore = $denunciadoExistente->id_natural;
         }
 
         // 2. Construir la regla para el CI:
         //    - 'nullable': Permite que el campo CI sea opcional (puede ser nulo).
         //    - 'string|max:20': Debe ser una cadena y con un máximo de 20 caracteres.
+        // La regla 'unique' ha sido eliminada, como solicitaste.
         $ciRule = 'nullable|string|max:20';
-
-        // Solo aplicamos la regla 'unique' si el campo 'ci' fue realmente proporcionado en la solicitud
-        // y no está vacío. Si no se proporciona o está vacío, no se valida la unicidad.
-        if (!empty($request->input('denunciado_natural.ci'))) {
-            // Añade la regla 'unique' a la tabla 'persona_natural', en la columna 'ci'.
-            $ciRule .= '|unique:persona_natural,ci';
-
-            // Si estamos actualizando un Denunciado y su PersonaNatural asociada ya existe,
-            // le decimos a la regla 'unique' que ignore el ID de esa PersonaNatural
-            // para evitar errores de unicidad consigo mismo.
-            if ($personaNaturalIdToIgnore) {
-                // Formato: unique:table,column,except,idColumn
-                $ciRule .= ',' . $personaNaturalIdToIgnore . ',id_natural';
-            }
-        }
 
         // 3. Definir las reglas de validación completas para todos los campos.
         $rules = [
@@ -440,7 +431,7 @@ class RegistrarCasoController extends Controller
             'denunciado_natural.primer_apellido'     => 'required|string|max:100',
             'denunciado_natural.segundo_apellido'    => 'nullable|string|max:100',
             'denunciado_natural.edad'                => 'required|integer|min:1|max:120',
-            'denunciado_natural.ci'                  => $ciRule, // Usamos la regla dinámica del CI
+            'denunciado_natural.ci'                  => $ciRule, // Usamos la regla dinámica del CI (ahora solo nullable|string|max:20)
             'denunciado_natural.telefono'            => 'nullable|string|max:20',
             'denunciado_natural.direccion_domicilio' => 'nullable|string|max:255',
             'denunciado_natural.relacion_parentesco' => 'nullable|string|max:100',
@@ -456,8 +447,6 @@ class RegistrarCasoController extends Controller
                 'denunciado_natural.nombres'         => 'Nombres del Denunciado',
                 'denunciado_natural.primer_apellido' => 'Primer Apellido del Denunciado',
                 'denunciado_natural.ci'              => 'CI del Denunciado',
-                // Mensaje personalizado para cuando el CI ya existe y no debería.
-                'denunciado_natural.ci.unique'       => 'El CI del Denunciado ya está registrado para otra persona en el sistema.',
                 'sexo'                               => 'Sexo del Denunciado',
                 'descripcion_hechos'                 => 'Descripción de los hechos',
             ]);
@@ -470,26 +459,20 @@ class RegistrarCasoController extends Controller
 
             $personaNatural = null;
 
-            // 5. Crear o actualizar la PersonaNatural asociada al Denunciado.
-            if ($personaNaturalIdToIgnore) {
-                // Si existe un ID de PersonaNatural a ignorar, significa que estamos actualizando
-                // la PersonaNatural ya vinculada a este Denunciado.
-                $personaNatural = PersonaNatural::find($personaNaturalIdToIgnore);
+            // Si el denunciado ya existe y tiene una persona natural asociada, la actualizamos.
+            // De lo contrario, creamos una nueva persona natural.
+            if ($denunciadoExistente && $denunciadoExistente->id_natural) {
+                $personaNatural = PersonaNatural::find($denunciadoExistente->id_natural);
                 if (!$personaNatural) {
-                    // Esto no debería ocurrir si la base de datos es consistente, pero es un fallback.
                     throw new \Exception('Persona Natural asociada al denunciado no encontrada para actualizar.');
                 }
                 $personaNatural->fill($denunciadoPersonaData);
                 $personaNatural->save();
             } else {
-                // Si no hay un ID a ignorar, es porque estamos creando un nuevo Denunciado
-                // o el Denunciado existente no tenía una PersonaNatural vinculada.
-                // Aquí, el CI debe ser único globalmente (ya validado por la regla dinámica si se proporcionó).
                 $personaNatural = PersonaNatural::create($denunciadoPersonaData);
             }
 
-            // 6. Crear o actualizar el registro de Denunciado.
-            // firstOrNew busca un registro existente con 'id_adulto' o crea una nueva instancia.
+            // 5. Crear o actualizar el registro de Denunciado.
             $denunciado = Denunciado::firstOrNew(['id_adulto' => $id_adulto]);
             $denunciado->id_natural = $personaNatural->id_natural; // Vincula la PersonaNatural
             $denunciado->sexo = $request->sexo; // Sexo específico para la tabla 'denunciado'

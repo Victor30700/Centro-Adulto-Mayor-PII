@@ -111,7 +111,10 @@ class FisioKineController extends Controller
             'num_emergencia' => 'nullable|string|max:255',
             'enfermedades_actuales' => 'nullable|string',
             'alergias' => 'nullable|string',
-            'fecha_programacion' => 'nullable|date',
+            'fecha_programacion' => 'required|date', // Se recomienda que la fecha de programación sea requerida.
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio', // Asegura que la fecha fin no sea anterior a la de inicio.
+            'numero_sesiones' => 'nullable|integer|min:0', // Asegura que sea un número entero no negativo.
             'motivo_consulta' => 'nullable|string',
             'solicitud_atencion' => 'nullable|string',
             'equipos' => 'nullable|string|max:255',
@@ -130,10 +133,14 @@ class FisioKineController extends Controller
                 'enfermedades_actuales' => $request->enfermedades_actuales,
                 'alergias' => $request->alergias,
                 'fecha_programacion' => $request->fecha_programacion,
+                'fecha_inicio' => $request->fecha_inicio, // <-- Campo nuevo
+                'fecha_fin' => $request->fecha_fin,       // <-- Campo nuevo
+                'numero_sesiones' => $request->numero_sesiones, // <-- Campo nuevo
                 'motivo_consulta' => $request->motivo_consulta,
                 'solicitud_atencion' => $request->solicitud_atencion,
                 'equipos' => $request->equipos,
             ]);
+
 
             DB::commit();
 
@@ -180,11 +187,14 @@ class FisioKineController extends Controller
      */
     public function updateFisio(Request $request, $cod_fisio)
     {
-        $request->validate([
+       $request->validate([
             'num_emergencia' => 'nullable|string|max:255',
             'enfermedades_actuales' => 'nullable|string',
             'alergias' => 'nullable|string',
-            'fecha_programacion' => 'nullable|date',
+            'fecha_programacion' => 'required|date',
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+            'numero_sesiones' => 'nullable|integer|min:0',
             'motivo_consulta' => 'nullable|string',
             'solicitud_atencion' => 'nullable|string',
             'equipos' => 'nullable|string|max:255',
@@ -201,6 +211,9 @@ class FisioKineController extends Controller
                 'enfermedades_actuales' => $request->enfermedades_actuales,
                 'alergias' => $request->alergias,
                 'fecha_programacion' => $request->fecha_programacion,
+                'fecha_inicio' => $request->fecha_inicio, // <-- Campo nuevo
+                'fecha_fin' => $request->fecha_fin,       // <-- Campo nuevo
+                'numero_sesiones' => $request->numero_sesiones, // <-- Campo nuevo
                 'motivo_consulta' => $request->motivo_consulta,
                 'solicitud_atencion' => $request->solicitud_atencion,
                 'equipos' => $request->equipos,

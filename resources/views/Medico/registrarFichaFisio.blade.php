@@ -1,5 +1,4 @@
 @extends('layouts.main')
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -18,7 +17,6 @@
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-
 @section('content')
 <body>
     <div class="navigation-buttons full-width">
@@ -33,7 +31,6 @@
             REGISTRO DE FICHA DE FISIOTERAPIA
         @endif
     </h6>
-
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -49,7 +46,6 @@
             });
         </script>
     @endif
-
     <div class="form-section">
         <form id="fisioterapia-form" action="@if($fisioterapia->exists)
                                         {{ route('responsable.fisioterapia.fisiokine.updateFisio', ['cod_fisio' => $fisioterapia->cod_fisio]) }}
@@ -60,12 +56,10 @@
             @if($fisioterapia->exists)
                 @method('PUT')
             @endif
-
             <input type="hidden" name="id_adulto" value="{{ $adulto->id_adulto }}">
             @if ($historiaClinica)
                 <input type="hidden" name="id_historia" value="{{ $historiaClinica->id_historia }}">
             @endif
-
             <h5 class="mt-4">DATOS DE IDENTIFICACIÓN DEL ADULTO MAYOR:</h5>
             <div class="row">
                 <div class="col-md-6">
@@ -151,7 +145,6 @@
                     </div>
                 </div>
             </div>
-
             <h5 class="mt-4">SITUACIÓN DE SALUD:</h5>
             <div class="row">
                 <div class="col-md-12">
@@ -173,14 +166,13 @@
                     </div>
                 </div>
             </div>
-
             <h5 class="mt-4">PLAN DE PARTICIPACIÓN INDIVIDUAL O GRUPAL:</h5>
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="fecha_programacion" class="form-label">FECHA DE PROGRAMACIÓN:</label>
                         <input type="date" id="fecha_programacion" name="fecha_programacion" class="form-control {{ $errors->has('fecha_programacion') ? 'is-invalid' : '' }}"
-                               value="{{ old('fecha_programacion', optional($fisioterapia->fecha_programacion)->format('Y-m-d')) }}">
+                               value="{{ old('fecha_programacion', optional(optional($fisioterapia)->fecha_programacion)->format('Y-m-d') ?? now()->format('Y-m-d')) }}">
                         @error('fecha_programacion')<span class="error-message">{{ $message }}</span>@enderror
                     </div>
                 </div>
@@ -192,6 +184,34 @@
                     </div>
                 </div>
             </div>
+            <!-- INICIO: NUEVOS CAMPOS -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="fecha_inicio" class="form-label">FECHA DE INICIO:</label>
+                        <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control {{ $errors->has('fecha_inicio') ? 'is-invalid' : '' }}"
+                               value="{{ old('fecha_inicio', optional(optional($fisioterapia)->fecha_inicio)->format('Y-m-d')) }}">
+                        @error('fecha_inicio')<span class="error-message">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="fecha_fin" class="form-label">FECHA DE FIN:</label>
+                        <input type="date" id="fecha_fin" name="fecha_fin" class="form-control {{ $errors->has('fecha_fin') ? 'is-invalid' : '' }}"
+                               value="{{ old('fecha_fin', optional(optional($fisioterapia)->fecha_fin)->format('Y-m-d')) }}">
+                        @error('fecha_fin')<span class="error-message">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="numero_sesiones" class="form-label">NÚMERO DE SESIONES:</label>
+                        <input type="number" id="numero_sesiones" name="numero_sesiones" class="form-control {{ $errors->has('numero_sesiones') ? 'is-invalid' : '' }}"
+                               value="{{ old('numero_sesiones', $fisioterapia->numero_sesiones) }}" min="0">
+                        @error('numero_sesiones')<span class="error-message">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+            </div>
+            <!-- FIN: NUEVOS CAMPOS -->
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
@@ -201,7 +221,6 @@
                     </div>
                 </div>
             </div>
-
             <h5 class="mt-4">EQUIPOS:</h5>
             <div class="row">
                 <div class="col-md-12">
@@ -214,7 +233,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="navigation-buttons full-width">
                 <button type="submit" class="btn btn-primary">
                     <i data-feather="save"></i> @if($fisioterapia->exists) Guardar Cambios @else Guardar Ficha @endif
@@ -224,7 +242,6 @@
     </div>
 </body>
 @endsection
-
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -232,23 +249,18 @@
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
-
         // Validaciones con SweetAlert2
         const form = document.getElementById('fisioterapia-form');
         if (form) {
             form.addEventListener('submit', function (event) {
                 let errors = [];
-
                 // Validar Números de Emergencia
                 const numEmergencia = document.getElementById('num_emergencia');
-                if (!numEmergencia.value.trim()) {
-                    errors.push('El campo "Números de Emergencia" es obligatorio.');
-                } else if (!/^[0-9\s\-+]+$/.test(numEmergencia.value.trim())) {
+                if (numEmergencia.value.trim() && !/^[0-9\s\-+]+$/.test(numEmergencia.value.trim())) {
                     errors.push('El campo "Números de Emergencia" debe contener solo dígitos, espacios, guiones o el signo "+".');
                 } else if (numEmergencia.value.length > 20) {
                     errors.push('El campo "Números de Emergencia" no debe exceder los 20 caracteres.');
                 }
-
                 // Validar Situación de Salud
                 const situacionSalud = [
                     { id: 'enfermedades_actuales', label: 'Enfermedades Actuales' },
@@ -256,24 +268,48 @@
                 ];
                 situacionSalud.forEach(field => {
                     const input = document.getElementById(field.id);
-                    if (!input.value.trim()) {
-                        errors.push(`El campo "${field.label}" es obligatorio.`);
-                    } else if (input.value.length > 1000) {
+                    if (input.value.length > 1000) {
                         errors.push(`El campo "${field.label}" no debe exceder los 1000 caracteres.`);
                     }
                 });
-
-                // Validar Plan de Participación
+                
+                // --- Validar Plan de Participación ---
                 const fechaProgramacion = document.getElementById('fecha_programacion');
                 if (!fechaProgramacion.value.trim()) {
                     errors.push('El campo "Fecha de Programación" es obligatorio.');
                 } else {
-                    const today = new Date('2025-06-26');
-                    const selectedDate = new Date(fechaProgramacion.value);
-                    if (selectedDate > today) {
-                        errors.push('El campo "Fecha de Programación" no puede ser una fecha futura.');
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const selectedDate = new Date(fechaProgramacion.value + 'T00:00:00'); // Asegurar que se compare solo la fecha
+                    
+                    // La validación original permitía la fecha actual. La mantendré.
+                    // Si se quisiera que solo sea la fecha actual o pasada:
+                    // if (selectedDate > today) {
+                    //     errors.push('El campo "Fecha de Programación" no puede ser una fecha futura.');
+                    // }
+                }
+
+                // --- Validar NUEVOS CAMPOS ---
+                const fechaInicioInput = document.getElementById('fecha_inicio');
+                const fechaFinInput = document.getElementById('fecha_fin');
+                const numeroSesionesInput = document.getElementById('numero_sesiones');
+
+                const fechaInicio = fechaInicioInput.value.trim();
+                const fechaFin = fechaFinInput.value.trim();
+                const numeroSesiones = numeroSesionesInput.value.trim();
+
+                if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
+                    errors.push('La "Fecha de Fin" no puede ser anterior a la "Fecha de Inicio".');
+                }
+
+                if (numeroSesiones) {
+                    if (!/^\d+$/.test(numeroSesiones)) {
+                        errors.push('El "Número de Sesiones" debe ser un número entero.');
+                    } else if (parseInt(numeroSesiones, 10) < 0) {
+                        errors.push('El "Número de Sesiones" no puede ser negativo.');
                     }
                 }
+                // --- FIN Validar NUEVOS CAMPOS ---
 
                 const planParticipacion = [
                     { id: 'motivo_consulta', label: 'Motivo de Consulta' },
@@ -281,21 +317,17 @@
                 ];
                 planParticipacion.forEach(field => {
                     const input = document.getElementById(field.id);
-                    if (!input.value.trim()) {
-                        errors.push(`El campo "${field.label}" es obligatorio.`);
-                    } else if (input.value.length > 1000) {
+                    if (input.value.length > 1000) {
                         errors.push(`El campo "${field.label}" no debe exceder los 1000 caracteres.`);
                     }
                 });
-
+                
                 // Validar Equipos
                 const equipos = document.getElementById('equipos');
-                if (!equipos.value.trim()) {
-                    errors.push('El campo "Equipos Utilizados" es obligatorio.');
-                } else if (equipos.value.length > 255) {
+                if (equipos.value.length > 255) {
                     errors.push('El campo "Equipos Utilizados" no debe exceder los 255 caracteres.');
                 }
-
+                
                 // Mostrar errores con SweetAlert2
                 if (errors.length > 0) {
                     event.preventDefault();
@@ -311,3 +343,4 @@
     });
 </script>
 @endpush
+
