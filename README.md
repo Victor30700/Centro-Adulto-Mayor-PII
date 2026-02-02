@@ -1,61 +1,148 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏥 Sistema Integral de Gestión - Centro de Adulto Mayor
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <a href="https://laravel.com" target="_blank">
+    <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="300" alt="Laravel Logo">
+  </a>
 </p>
 
-## About Laravel
+<p align="center">
+    <img src="https://img.shields.io/badge/Laravel-12.0-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel">
+    <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP">
+    <img src="https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
+    <img src="https://img.shields.io/badge/Vite-6.0-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📖 Descripción del Proyecto
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+El **Sistema de Gestión para Centro de Adulto Mayor** es una plataforma web integral desarrollada para optimizar la administración, atención y seguimiento de los adultos mayores beneficiarios. Este sistema permite la digitalización de expedientes y la interconexión entre las áreas **Médica, Legal, Social y Administrativa**.
 
-## Learning Laravel
+El objetivo principal es brindar una herramienta eficiente para el registro de historias clínicas, seguimiento legal, intervenciones sociales y terapias de rehabilitación, asegurando un control detallado y profesional de cada caso.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🚀 Características Principales
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 🛠️ Módulo Administrativo
+- **Gestión de Usuarios y Roles:** Control de acceso granular (Administrador, Legal, Responsable de Salud).
+- **Registro de Beneficiarios:** Base de datos centralizada de adultos mayores.
+- **Auditoría:** Papelera de reciclaje y restauración de registros eliminados.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🩺 Módulo Médico y Salud
+- **Historia Clínica Digital:** Registro completo de antecedentes, diagnósticos y evoluciones.
+- **Enfermería:** Control de signos vitales, administración de medicamentos y curaciones.
+- **Exámenes Complementarios:** Gestión de resultados y archivos adjuntos.
 
-## Laravel Sponsors
+### ⚖️ Módulo Legal y Social (Protección)
+- **Gestión de Casos:** Registro de denuncias, seguimiento de casos y orientaciones legales.
+- **Fichas Sociales:** Croquis de vivienda, composición del grupo familiar y situación socioeconómica.
+- **Intervenciones:** Registro de visitas domiciliarias y acciones tomadas.
+- **Documentación:** Generación automática de Anexos (N3, N5) y reportes.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 🤸 Módulo de Rehabilitación (Fisioterapia y Kinesiología)
+- **Fichas de Tratamiento:** Registro de sesiones de fisioterapia y kinesiología.
+- **Evolución del Paciente:** Seguimiento del progreso físico y funcional.
+- **Reportes Especializados:** Exportación de fichas en formatos Word y Excel.
 
-### Premium Partners
+## 💻 Stack Tecnológico
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Backend:** [Laravel Framework](https://laravel.com) (v12.x)
+- **Lenguaje:** PHP ^8.2
+- **Frontend:** Blade Templates, [Tailwind CSS](https://tailwindcss.com) v4, [Vite](https://vitejs.dev)
+- **Base de Datos:** MySQL / MariaDB
+- **Generación de Documentos:**
+  - `barryvdh/laravel-dompdf`: Exportación a PDF.
+  - `phpoffice/phpword`: Generación de documentos Word.
+  - `phpoffice/phpspreadsheet`: Reportes en Excel.
 
-## Contributing
+## ⚙️ Requisitos del Sistema
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Asegúrese de tener instalado lo siguiente antes de comenzar:
 
-## Code of Conduct
+- PHP >= 8.2
+- Composer
+- Node.js & NPM
+- Servidor de Base de Datos (MySQL/MariaDB)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🔧 Instalación y Configuración
 
-## Security Vulnerabilities
+Siga estos pasos para desplegar el proyecto en su entorno local:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1.  **Clonar el repositorio**
+    ```bash
+    git clone https://github.com/usuario/centro-adulto-mayor.git
+    cd centro-adulto-mayor
+    ```
 
-## License
+2.  **Instalar dependencias de PHP**
+    ```bash
+    composer install
+    ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+3.  **Instalar dependencias de Frontend**
+    ```bash
+    npm install
+    ```
+
+4.  **Configurar el entorno**
+    Duplique el archivo de ejemplo y configure sus credenciales de base de datos.
+    ```bash
+    cp .env.example .env
+    ```
+    Edite el archivo `.env` con su configuración de base de datos:
+    ```env
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=nombre_de_su_base_de_datos
+    DB_USERNAME=su_usuario
+    DB_PASSWORD=su_contraseña
+    ```
+
+5.  **Generar clave de aplicación**
+    ```bash
+    php artisan key:generate
+    ```
+
+6.  **Ejecutar migraciones y seeders**
+    Esto creará las tablas y poblará la base de datos con los roles y usuarios iniciales.
+    ```bash
+    php artisan migrate --seed
+    ```
+
+7.  **Compilar activos y ejecutar servidor**
+    Abra dos terminales:
+    
+    *Terminal 1 (Vite - Desarrollo Frontend):*
+    ```bash
+    npm run dev
+    ```
+    
+    *Terminal 2 (Servidor Laravel):*
+    ```bash
+    php artisan serve
+    ```
+
+El sistema estará accesible en `http://localhost:8000`.
+
+## 📂 Estructura de Directorios Clave
+
+```
+app/
+├── Http/Controllers/   # Controladores (Lógica de negocio por módulos)
+├── Models/             # Modelos Eloquent (Representación de datos)
+database/
+├── migrations/         # Definición del esquema de base de datos
+├── seeders/            # Datos iniciales de prueba y configuración
+resources/
+├── views/              # Vistas Blade (Interfaz de usuario)
+routes/
+└── web.php             # Definición de rutas del sistema
+```
+
+## 📄 Licencia
+
+Este proyecto es software privado y confidencial. Todos los derechos reservados.
+
+---
+**Desarrollado para la Alcaldía - Gestión 2026**

@@ -272,6 +272,7 @@
                         errors.push(`El campo "${field.label}" no debe exceder los 1000 caracteres.`);
                     }
                 });
+<<<<<<< HEAD
                 
                 // --- Validar Plan de Participación ---
                 const fechaProgramacion = document.getElementById('fecha_programacion');
@@ -310,7 +311,36 @@
                     }
                 }
                 // --- FIN Validar NUEVOS CAMPOS ---
+=======
 
+                // Validar Plan de Participación------------------------------------------------------------------------
+                // Obtener el elemento del campo de fecha
+            const fechaProgramacion = document.getElementById('fecha_programacion');
+>>>>>>> 70f303ddae3d3b65ffed935586b9cd0af047dccc
+
+            // Verificar si el campo está vacío
+            if (!fechaProgramacion.value.trim()) {
+                errors.push('El campo "Fecha de Programación" es obligatorio.');
+            } else {
+                // Obtener la fecha actual del sistema y normalizarla a medianoche
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Establecer la hora a 00:00:00.000 para comparar solo la fecha
+
+                // Obtener la fecha seleccionada del input y normalizarla a medianoche
+                const selectedDate = new Date(fechaProgramacion.value);
+                selectedDate.setHours(0, 0, 0, 0); // Establecer la hora a 00:00:00.000 para comparar solo la fecha
+
+                // Validar si la fecha seleccionada es una fecha futura
+                // Si selectedDate es mayor que today, significa que es una fecha futura.
+                if (selectedDate > today) {
+                    errors.push('El campo "Fecha de Programación" no puede ser una fecha futura.');
+                }
+                // Si necesitas que la fecha tampoco pueda ser anterior a hoy, añadirías:
+                // else if (selectedDate < today) {
+                //     errors.push('El campo "Fecha de Programación" no puede ser una fecha pasada.');
+                // }
+            }
+                //------------------------------------------------------------------------------------------------------
                 const planParticipacion = [
                     { id: 'motivo_consulta', label: 'Motivo de Consulta' },
                     { id: 'solicitud_atencion', label: 'Solicitud Atención' }
